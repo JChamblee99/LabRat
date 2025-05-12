@@ -12,6 +12,8 @@ def build_parser(subparser=None):
     parser.add_argument("-C", "--combo-list", required=False, help="Path to the combo list file")
     parser.add_argument("-l", "--use-ldap", action="store_true", help="Use LDAP for authentication")
     parser.add_argument("-r", "--re-auth", action="store_true", help="Re-authenticate with stored credentials")
+
+    parser.set_defaults(func=handle_args)
     return parser
 
 def handle_args(args):
@@ -28,37 +30,29 @@ def reauth(args):
     config = Config()
     
     # Iterate config sections and re-authenticate
-    for section in config.sections():
-        if section not in ["DEFAULT", "global"]:
-            c = config[section]
-            url = c.get("url", None)
-            username = c.get("username", None)
-            password = c.get("password", None)
+    for section, agent in config:
+        # Filter by target if specified
+        if args.target and args.target not in agent.url:
+            continue
 
-            # Filter by target if specified
-            if args.target and args.target not in url:
-                continue
+        # Filter by username if specified
+        if args.username and args.username != agent.username:
+            continue
 
-            # Filter by username if specified
-            if args.username and args.username != username:
-                continue
-
-            agent = Agent.from_dict(c)
-
-            if agent.auth():
-                print(f"[+] Authenticated as {section} with {agent.private_token}")
+        if agent.auth():
+            print(f"[+] Authenticated as {section} with {agent.private_token}")
+            config[section] = agent.to_dict()
+            continue
+        elif agent.username and agent.password:
+            print(f"[-] Authentication failed for {section}, re-authenticating...")
+            agent.login()
+            token = agent.create_pat()
+            if token and agent.auth(private_token=token):
+                print(f"[+] Re-authenticated as {section} with {agent.private_token}")
                 config[section] = agent.to_dict()
                 continue
-            elif username and password:
-                print(f"[-] Authentication failed for {section}, re-authenticating...")
-                agent.login()
-                token = agent.create_pat()
-                if token and agent.auth(private_token=token):
-                    print(f"[+] Re-authenticated as {section} with {agent.private_token}")
-                    config[section] = agent.to_dict()
-                    continue
 
-            print(f"[-] Re-authentication failed for {section}")
+        print(f"[-] Re-authentication failed for {section}")
 
 def auth(args):
     config = Config()

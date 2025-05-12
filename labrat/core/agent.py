@@ -1,6 +1,5 @@
 import requests
 from bs4 import BeautifulSoup
-from labrat.core.config import Config
 import gitlab
 
 class Agent:
