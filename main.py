@@ -1,6 +1,6 @@
 # labrat/main.py
 import argparse
-from labrat.cli import auth
+from labrat.cli import auth, projects
 
 def main():
     parser = argparse.ArgumentParser(
@@ -12,7 +12,6 @@ def main():
     # Auth subcommand
     auth_parser = subparsers.add_parser("auth", help="Authenticate to GitLab server(s)")
     auth.build_parser(auth_parser)
-    auth_parser.set_defaults(func=auth.handle_args)
 
     # Run subcommand
     run_parser = subparsers.add_parser("run", help="Execute CI/CD job")
@@ -22,9 +21,7 @@ def main():
 
     # Projects subcommand
     projects_parser = subparsers.add_parser("projects", help="Manage GitLab projects")
-    projects_parser.add_argument("--list", action="store_true")
-    projects_parser.add_argument("--get-all", action="store_true")
-    #projects_parser.set_defaults(func=projects.handle_args)
+    projects.build_parser(projects_parser)
 
     args = parser.parse_args()
     args.func(args)
