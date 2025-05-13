@@ -49,6 +49,10 @@ def handle_list_args(args):
             # Fetch the list of projects for the agent
             projects = agent.gitlab.projects.list()
             for project in projects:
+                # Filter by project name if specified
+                if args.filter and args.filter not in project.path_with_namespace:
+                    continue
+                
                 domain = urlparse(agent.url).netloc
                 if domain not in repo_map:
                     repo_map[domain] = []  # Initialize the list if not already present
