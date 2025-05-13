@@ -11,21 +11,27 @@ def build_parser(subparser=None):
     
     subparsers = parser.add_subparsers(dest="command", required=True)
     list_parser = subparsers.add_parser("list", help="List GitLab projects")
-    build_sub_parser(handle_list_args,list_parser)
+    build_sub_parser(handle_list_args, list_parser)
     
     clone_parser = subparsers.add_parser("clone", help="Clone GitLab repositories")
-    build_sub_parser(handle_clone_args,clone_parser)
+    build_sub_parser(handle_clone_args, clone_parser)
     return parser
 
 def build_sub_parser(handle=None, subparser=None, prog=None):
     parser = argparse.ArgumentParser(prog) if subparser is None else subparser
+    parser.add_argument("-a", "--all", action="store_true", required=False, help="All projects")
+    parser.add_argument("-f", "--filter", required=False, help="Filter for project names")
     parser.add_argument("-t", "--target", required=False, help="GitLab server URL or pattern")
     parser.add_argument("-u", "--username", required=False, help="Username or e-mail for authentication")
-    parser.add_argument("-f", "--filter", required=False, help="Filter for project names")
     parser.set_defaults(func=handle)
     return parser
 
 def handle_list_args(args):
+    # If no arguments are provided, show help
+    if not args.all and not args.filter and not args.target and not args.username:
+        build_sub_parser(handle_list_args).print_help()
+        return
+
     # Dictionary to store repositories and their associated users
     repo_map = {}
 
