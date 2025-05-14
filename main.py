@@ -1,6 +1,6 @@
 # labrat/main.py
 import argparse
-from labrat.cli import auth, projects
+from labrat.cli import agents, auth, projects
 
 def main():
     parser = argparse.ArgumentParser(
@@ -8,6 +8,10 @@ def main():
         description="LabRat: GitLab exploitation orchestrator"
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
+
+    # Agents subcommand
+    agents_parser = subparsers.add_parser("agents", help="Manage GitLab agents")
+    agents.build_parser(agents_parser)
 
     # Auth subcommand
     auth_parser = subparsers.add_parser("auth", help="Authenticate to GitLab server(s)")
