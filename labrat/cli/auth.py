@@ -73,7 +73,7 @@ def auth(args):
     # Iterate over each user and target
     for username, password in users:
         for target in targets:
-            domain = urlparse(target).netloc.split(":")[0]
+            domain = urlparse(target).hostname
             section = f"{username}@{domain}"
 
             c = config[section]
