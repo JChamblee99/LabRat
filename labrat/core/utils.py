@@ -1,6 +1,5 @@
 import re
 
-
 def parse_host_range(host_pattern):
     """
     Parse a host pattern and generate a list of individual host addresses.
@@ -34,3 +33,18 @@ def parse_host_range(host_pattern):
 
     # If no range is detected, return the host as-is
     return [host_pattern]
+
+def print_table(headers, data):
+    """
+    Print a table with the given data and headers.
+    """
+    column_widths = [max(len(str(x)) for x in col) for col in zip(*([headers] + data))]
+
+    # Print header
+    if headers:
+        print(" " + "  ".join(h.ljust(w) for h, w in zip(headers, column_widths)) + " ")
+        print(" ".join("=" * (w + 1) for w in column_widths))
+
+    # Print data rows
+    for row in data:
+        print(" " + "  ".join(str(x).ljust(w) for x, w in zip(row, column_widths)) + " ")

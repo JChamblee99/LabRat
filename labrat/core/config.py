@@ -32,3 +32,11 @@ class Config:
 
     def sections(self):
         return self._config.sections()
+    
+    def remove_section(self, section):
+        if section in self._config:
+            self._config.remove_section(section)
+            self._save()
+            return True
+        else:
+            return False
