@@ -1,13 +1,15 @@
 import configparser
+import os
 import threading
+from pathlib import Path
 
 from labrat.core.agent import Agent
 
 class Config:
-    def __init__(self, config_file=".python-gitlab.cfg"):
-        self.config_file = config_file
+    def __init__(self, config_file="~/.python-gitlab.cfg"):
+        self.config_file = str(Path(config_file).expanduser())
         self._config = configparser.ConfigParser()
-        self._config.read(config_file)
+        self._config.read(self.config_file)
 
     def __getitem__(self, section):
         try:
