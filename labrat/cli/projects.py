@@ -13,7 +13,7 @@ def build_parser(subparser=None):
     parser = argparse.ArgumentParser("labrat projects") if subparser is None else subparser
     
     subparsers = parser.add_subparsers(dest="command", required=True)
-    list_parser = subparsers.add_parser("list", help="List GitLab projects")
+    list_parser = subparsers.add_parser("list", aliases=["ls"], help="List GitLab projects")
     build_list_parser(list_parser)
     
     clone_parser = subparsers.add_parser("clone", help="Clone GitLab repositories")

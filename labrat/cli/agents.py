@@ -10,10 +10,10 @@ def build_parser(subparser=None):
     parser = argparse.ArgumentParser("labrat agents") if subparser is None else subparser
     
     subparsers = parser.add_subparsers(dest="command", required=True)
-    list_parser = subparsers.add_parser("list", help="List GitLab servers")
+    list_parser = subparsers.add_parser("list", aliases=["ls"], help="List GitLab servers")
     build_sub_parser(handle_list_args, list_parser)
     
-    delete_parser = subparsers.add_parser("delete", help="Delete GitLab server from config")
+    delete_parser = subparsers.add_parser("delete", aliases=["rn"], help="Delete GitLab server from config")
     build_sub_parser(handle_delete_args, delete_parser)
     return parser
 
