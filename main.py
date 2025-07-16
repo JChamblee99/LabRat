@@ -17,12 +17,6 @@ def main():
     auth_parser = subparsers.add_parser("auth", help="Authenticate to GitLab server(s)")
     auth.build_parser(auth_parser)
 
-    # Run subcommand
-    run_parser = subparsers.add_parser("run", help="Execute CI/CD job")
-    run_parser.add_argument("-u", "--username", required=True)
-    run_parser.add_argument("-c", "--command", required=True)
-    #run_parser.set_defaults(func=run.handle_args)
-
     # Projects subcommand
     projects_parser = subparsers.add_parser("projects", help="Manage GitLab projects")
     projects.build_parser(projects_parser)

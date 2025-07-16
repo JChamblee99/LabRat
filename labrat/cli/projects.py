@@ -22,29 +22,19 @@ def build_parser(subparser=None):
 
 def build_list_parser(subparser=None, prog=None):
     parser = argparse.ArgumentParser(prog) if subparser is None else subparser
-    parser.add_argument("-a", "--all", action="store_true", required=False, help="All projects")
-    parser.add_argument("-f", "--filter", required=False, help="Filter for project names")
-    parser.add_argument("-t", "--target", required=False, help="GitLab server URL or pattern")
-    parser.add_argument("-u", "--username", required=False, help="Username or e-mail for authentication")
+    parser.add_argument("-f", "--filter", required=False, help="Filter by substring")
     parser.set_defaults(func=handle_list_args)
     return parser
 
 def build_clone_parser(subparser=None, prog=None):
     parser = argparse.ArgumentParser(prog) if subparser is None else subparser
     parser.add_argument("-a", "--all", action="store_true", required=False, help="All projects")
-    parser.add_argument("-f", "--filter", required=False, help="Filter for project names")
-    parser.add_argument("-t", "--target", required=False, help="GitLab server URL or pattern")
-    parser.add_argument("-u", "--username", required=False, help="Username or e-mail for authentication")
+    parser.add_argument("-f", "--filter", required=False, help="Filter by substring")
     parser.add_argument("-o", "--output", required=False, help="Output location for cloned repositories", default='./')
     parser.set_defaults(func=handle_clone_args)
     return parser
 
 def handle_list_args(args):
-    # If no arguments are provided, show help
-    if not args.all and not args.filter and not args.target and not args.username:
-        build_list_parser(prog="labrat projects list").print_help()
-        return
-    
     projects = get_projects(args)
 
     # Format map for table
@@ -58,11 +48,11 @@ def handle_list_args(args):
                 ", ".join(usernames)
             ])
 
-    print_table(["Target", "Repository", "Users"], data)
+    print_table(["Target", "Project", "Usernames"], data)
 
 def handle_clone_args(args):
     # If no arguments are provided, show help
-    if not args.all and not args.filter and not args.target and not args.username:
+    if not args.all and not args.filter:
         build_clone_parser(prog="labrat projects clone").print_help()
         return
     
@@ -96,20 +86,12 @@ def get_projects(args):
 
     # Iterate through the configuration
     for section, agent in Config():
-        # Filter by target if specified
-        if args.target and args.target not in agent.url:
-            continue
-
-        # Filter by username if specified
-        if args.username and args.username != agent.username:
-            continue
-
         if agent.auth():
             # Fetch the list of projects for the agent
             projects = agent.gitlab.projects.list(all=True)
             for project in projects:
-                # Filter by project name if specified
-                if args.filter and args.filter not in project.path_with_namespace:
+                # Filter by sbstring of fields
+                if args.filter and args.filter.casefold() not in (f"{agent.url} {project.path_with_namespace} {agent.username}"):
                     continue
                 
                 domain = urlparse(agent.url).netloc
