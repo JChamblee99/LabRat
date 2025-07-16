@@ -25,9 +25,6 @@ def build_sub_parser(handle=None, subparser=None, prog=None):
     return parser
 
 def handle_list_args(args):
-    if not args.all and not args.filter:
-        build_sub_parser(handle_delete_args, prog="labrat agents list").print_help()
-        return
     config = Config()
 
     # Extract and sort sections by domain
