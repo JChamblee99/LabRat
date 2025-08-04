@@ -109,7 +109,7 @@ class Agent:
             username=data.get("username"),
             password=data.get("password"),
             private_token=data.get("private_token"),
-            is_admin=data.get("is_admin", False),
-            use_ldap=data.get("use_ldap", False),
+            is_admin=(True if data.get("is_admin") == "True" else False),
+            use_ldap=(True if data.get("use_ldap") == "True" else False),
             api_version=data.get("api_version", 4)
         )
