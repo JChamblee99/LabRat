@@ -25,12 +25,30 @@ class Config:
         with open(self.config_file, "w") as file:
             self._config.write(file)
 
-    def __iter__(self):
+    def __iter__(self, keyword=None):
         for section in self.sections():
             if section not in ["DEFAULT", "global"]:  # Skip special sections
+                
                 data = self[section]
+
+                # If keyword is provided, filter the agents for it
+                if keyword:
+                    fields = [
+                        section,
+                        data.get("url", ""),
+                        data.get("username", ""),
+                        "admin" if data.getboolean("is_admin", False) else "user",
+                        data.get("private_token", "")
+                    ]
+
+                    if keyword.casefold() not in " ".join(fields).casefold():
+                        continue
+
                 agent = Agent.from_dict(data)  # Create an Agent instance from the section data
                 yield section, agent
+
+    def filter(self, keyword):
+        return self.__iter__(keyword)
 
     def sections(self):
         return self._config.sections()
