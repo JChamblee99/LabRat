@@ -12,20 +12,23 @@ def build_parser(subparser=None):
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     list_parser = subparsers.add_parser("list", aliases=["ls"], help="List GitLab servers")
-    build_sub_parser(handle_list_args, list_parser)
+    build_sub_parser(handle_list_args, list_parser, filter_required=False)
     
     delete_parser = subparsers.add_parser("delete", aliases=["rm"], help="Delete GitLab server from config")
-    build_sub_parser(handle_delete_args, delete_parser)
+    build_sub_parser(handle_delete_args, delete_parser, filter_required=True)
 
     add_key_parser = subparsers.add_parser("add-key", help="Add SSH key to the user account")
     build_add_key_parser(add_key_parser)
 
     return parser
 
-def build_sub_parser(handle=None, subparser=None, prog=None):
+def build_sub_parser(handle=None, subparser=None, prog=None, filter_required=True):
     parser = argparse.ArgumentParser(prog) if subparser is None else subparser
-    parser.add_argument("-a", "--all", action="store_true", required=False, help="All agents")
-    parser.add_argument("-f", "--filter", required=False, help="Filter agents by substring")
+
+    filter_group = parser.add_mutually_exclusive_group(required=filter_required)
+    filter_group.add_argument("-a", "--all", action="store_true", required=False, help="All agents")
+    filter_group.add_argument("-f", "--filter", required=False, help="Filter agents by substring")
+    
     parser.set_defaults(func=handle)
     return parser
 
@@ -73,24 +76,12 @@ def handle_list_args(args):
     print_table(headers, data)
 
 def handle_delete_args(args):
-    if not args.all and not args.filter:
-        build_sub_parser(handle_delete_args, prog="labrat agents delete").print_help()
-        return
-
     config = Config()
 
     # Delete configs for filtered sections
-    for section in config.sections():
-        if section == "DEFAULT" or section == "global":
-            continue
-
-        type = "admin" if config[section].getboolean("is_admin", False) else "user"
-        if args.filter not in section and args.filter not in type and args.filter not in config[section].get("private_token", ""):
-            continue
+    for section, _ in config.filter(args.filter):
         config.remove_section(section)
         print(f"[-] Deleted {section} from config")
-
-    return
 
 def handle_add_key_args(args):
     if args.key:
