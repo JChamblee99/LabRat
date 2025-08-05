@@ -86,6 +86,9 @@ class Agent:
         else:
             print(f"[-] Cannot create PAT for user {user_id}. {self.username} is not an admin")
             return None
+        
+    def add_ssh_key(self, title, key):
+        self.gitlab.user.keys.create({'title': title, 'key': key})
 
     def to_dict(self):
         return {
