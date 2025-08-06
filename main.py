@@ -9,21 +9,8 @@ def main():
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    # Agents subcommand
-    agents_parser = subparsers.add_parser("agents", help="Manage GitLab agents")
-    agents.build_parser(agents_parser)
-
-    # Auth subcommand
-    auth_parser = subparsers.add_parser("auth", help="Authenticate to GitLab server(s)")
-    auth.build_parser(auth_parser)
-
-    # Projects subcommand
-    projects_parser = subparsers.add_parser("projects", help="Manage GitLab projects")
-    projects.build_parser(projects_parser)
-
-    # Run subcommand
-    run_parser = subparsers.add_parser("run", help="Execute CI/CD job")
-    run.build_parser(run_parser)
+    for command in [agents, auth, projects, run]:
+        command.build_parser(subparsers)
 
     args = parser.parse_args()
     args.func(args)

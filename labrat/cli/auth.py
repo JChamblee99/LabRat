@@ -1,11 +1,13 @@
 import argparse
 from urllib.parse import urlparse
+
 from labrat.core.agent import Agent
 from labrat.core.config import Config
 from labrat.core.utils import parse_host_range
 
-def build_parser(subparser=None):
-    parser = argparse.ArgumentParser("labrat auth") if subparser is None else subparser
+def build_parser(parsers):
+    parser = parsers.add_parser("auth", help="Authenticate to GitLab server(s)")
+    
     parser.add_argument("-t", "--target", required=False, help="GitLab server URL or pattern")
     parser.add_argument("-u", "--username", required=False, help="Username or e-mail for authentication")
     parser.add_argument("-p", "--password", required=False, help="Password for authentication")
@@ -13,7 +15,7 @@ def build_parser(subparser=None):
     parser.add_argument("-l", "--use-ldap", action="store_true", help="Use LDAP for authentication")
     parser.add_argument("-r", "--re-auth", action="store_true", help="Re-authenticate with stored credentials")
 
-    parser.set_defaults(func=handle_args)
+    parser.set_defaults(func=handle_args, _parser=parser)
     return parser
 
 def handle_args(args):
@@ -22,7 +24,7 @@ def handle_args(args):
     elif args.target and (args.username and args.password or args.combo_list):
         auth(args)
     else:
-        build_parser().print_help()
+        getattr(args, "_parser", None).print_help()
         return
     
 

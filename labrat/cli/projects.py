@@ -1,38 +1,25 @@
-
 import argparse
 import git
 import re
 import os
 from urllib.parse import urlparse
+
+from labrat.cli import common
 from labrat.core.agent import Agent
 from labrat.core.config import Config
 from labrat.core.utils import print_table
 
 
-def build_parser(subparser=None):
-    parser = argparse.ArgumentParser("labrat projects") if subparser is None else subparser
-    
+def build_parser(parsers):
+    parser = parsers.add_parser("projects", help="Manage GitLab projects")
     subparsers = parser.add_subparsers(dest="command", required=True)
-    list_parser = subparsers.add_parser("list", aliases=["ls"], help="List GitLab projects")
-    build_list_parser(list_parser)
+
+    list_parser = common.add_filtered_parser(subparsers, "list", handle_list_args, aliases=["ls"], help="List GitLab projects", filter_required=False)
     
-    clone_parser = subparsers.add_parser("clone", help="Clone GitLab repositories")
-    build_clone_parser(clone_parser)
-    return parser
+    clone_parser = common.add_filtered_parser(subparsers, "clone", handle_clone_args, help="Clone GitLab repositories")
+    clone_parser.add_argument("-o", "--output", required=False, help="Output location for cloned repositories", default='./')
 
-def build_list_parser(subparser=None, prog=None):
-    parser = argparse.ArgumentParser(prog) if subparser is None else subparser
-    parser.add_argument("-f", "--filter", required=False, help="Filter by substring")
-    parser.set_defaults(func=handle_list_args)
-    return parser
-
-def build_clone_parser(subparser=None, prog=None):
-    parser = argparse.ArgumentParser(prog) if subparser is None else subparser
-    parser.add_argument("-a", "--all", action="store_true", required=False, help="All projects")
-    parser.add_argument("-f", "--filter", required=False, help="Filter by substring")
-    parser.add_argument("-o", "--output", required=False, help="Output location for cloned repositories", default='./')
-    parser.set_defaults(func=handle_clone_args)
-    return parser
+    return subparsers
 
 def handle_list_args(args):
     projects = get_projects(args)
@@ -51,11 +38,6 @@ def handle_list_args(args):
     print_table(["Target", "Project", "Usernames"], data)
 
 def handle_clone_args(args):
-    # If no arguments are provided, show help
-    if not args.all and not args.filter:
-        build_clone_parser(prog="labrat projects clone").print_help()
-        return
-    
     projects = get_projects(args)
 
     for target, repos in projects.items():

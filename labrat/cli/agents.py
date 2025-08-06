@@ -1,47 +1,25 @@
 import argparse
 from urllib.parse import urlparse
 
+from labrat.cli import common
 from labrat.core.agent import Agent
 from labrat.core.config import Config
 from labrat.core.utils import print_table
 
 
-def build_parser(subparser=None):
-    parser = argparse.ArgumentParser("labrat agents") if subparser is None else subparser
-    
+def build_parser(parsers):
+    parser = parsers.add_parser("agents", help="Manage GitLab agents")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    list_parser = subparsers.add_parser("list", aliases=["ls"], help="List GitLab servers")
-    build_sub_parser(handle_list_args, list_parser, filter_required=False)
+    list_parser = common.add_filtered_parser(subparsers, "list", handle_list_args, aliases=["ls"], help="List GitLab servers", filter_required=False)
     
-    delete_parser = subparsers.add_parser("delete", aliases=["rm"], help="Delete GitLab server from config")
-    build_sub_parser(handle_delete_args, delete_parser, filter_required=True)
+    delete_parser = common.add_filtered_parser(subparsers, "delete", handle_delete_args, aliases=["rm"], help="Delete GitLab server from config")
 
-    add_key_parser = subparsers.add_parser("add-key", help="Add SSH key to the user account")
-    build_add_key_parser(add_key_parser)
+    add_key_parser = common.add_filtered_parser(subparsers, "add-key", handle_add_key_args, help="Add SSH key to the user account", filter_required=False)
+    key_group = add_key_parser.add_mutually_exclusive_group(required=True)
+    key_group.add_argument("-k", "--key", required=False, help="Public SSH key to add")
+    key_group.add_argument("-K", "--key-file", required=False, help="Path to public SSH key file")
 
-    return parser
-
-def build_sub_parser(handle=None, subparser=None, prog=None, filter_required=True):
-    parser = argparse.ArgumentParser(prog) if subparser is None else subparser
-
-    filter_group = parser.add_mutually_exclusive_group(required=filter_required)
-    filter_group.add_argument("-a", "--all", action="store_true", required=False, help="All agents")
-    filter_group.add_argument("-f", "--filter", required=False, help="Filter agents by substring")
-    
-    parser.set_defaults(func=handle)
-    return parser
-
-def build_add_key_parser(subparser=None, prog=None):
-    parser = argparse.ArgumentParser(prog) if subparser is None else subparser
-    parser.add_argument("-f", "--filter", required=False, help="Filter agents by substring")
-    parser.add_argument("-t", "--title", required=False, default="Default Key", help="Title for the SSH key")
-
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("-k", "--key", required=False, help="Public SSH key to add")
-    group.add_argument("-K", "--key-file", required=False, help="Path to public SSH key file")
-    
-    parser.set_defaults(func=handle_add_key_args)
     return parser
 
 def handle_list_args(args):
