@@ -67,22 +67,24 @@ def get_projects(args):
 
     # Iterate through the configuration
     for section, agent in Config():
-        if agent.auth():
-            # Fetch the list of projects for the agent
-            projects = agent.gitlab.projects.list(all=True)
-            for project in projects:
-                # Filter by sbstring of fields
-                if args.filter and args.filter.casefold() not in (f"{agent.url} {project.path_with_namespace} {agent.username}"):
-                    continue
-                
-                domain = urlparse(agent.url).netloc
-                if domain not in repo_map:
-                    repo_map[domain] = {}
-                if project.path_with_namespace not in repo_map[domain]:
-                    repo_map[domain][project.path_with_namespace] = []
-                repo_map[domain][project.path_with_namespace].append(agent)
-        else:
+        if not agent.auth():
             print(f"[-] Authentication failed for {section}")
+            continue
+        
+        # Fetch the list of projects for the agent
+        projects = agent.gitlab.projects.list(all=True)
+        for project in projects:
+            # Filter by sbstring of fields
+            if args.filter and args.filter.casefold() not in (f"{agent.url} {project.path_with_namespace} {agent.username}"):
+                continue
+            
+            domain = urlparse(agent.url).netloc
+            if domain not in repo_map:
+                repo_map[domain] = {}
+            if project.path_with_namespace not in repo_map[domain]:
+                repo_map[domain][project.path_with_namespace] = []
+            repo_map[domain][project.path_with_namespace].append(agent)
+            
 
     # Sort targets
     repo_map = dict(sorted(repo_map.items(), key=lambda x: re.sub(r"[^a-zA-Z0-9]", "", x[0])))
