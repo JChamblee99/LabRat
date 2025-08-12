@@ -7,7 +7,6 @@ from urllib.parse import urlparse
 from labrat.cli import common
 from labrat.core.agent import Agent
 from labrat.core.config import Config
-from labrat.core.utils import print_table
 
 
 def build_parser(parsers):
@@ -35,7 +34,7 @@ def handle_list_args(args):
                 ", ".join(usernames)
             ])
 
-    print_table(["Target", "Project", "Usernames"], data)
+    common.print_table(["Target", "Project", "Usernames"], data)
 
 def handle_clone_args(args):
     projects = get_projects(args)

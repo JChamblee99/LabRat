@@ -4,7 +4,6 @@ from urllib.parse import urlparse
 from labrat.cli import common
 from labrat.core.agent import Agent
 from labrat.core.config import Config
-from labrat.core.utils import print_table
 
 
 def build_parser(parsers):
@@ -51,7 +50,7 @@ def handle_list_args(args):
     if args.filter:
         data = [row for row in data if any(args.filter in str(item) for item in row)]
 
-    print_table(headers, data)
+    common.print_table(headers, data)
 
 def handle_delete_args(args):
     config = Config()

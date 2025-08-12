@@ -4,7 +4,6 @@ from urllib.parse import urlparse
 from labrat.cli import common
 from labrat.core.agent import Agent
 from labrat.core.config import Config
-from labrat.core.utils import print_table
 
 def build_parser(parsers):
     parser = common.add_filtered_parser(parsers, "run", handle_args, help="Execute CI/CD job")

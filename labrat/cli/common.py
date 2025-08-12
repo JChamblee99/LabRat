@@ -12,3 +12,18 @@ def add_filtered_parser(subparsers, name, handler, aliases=[], help=None, filter
     
     parser.set_defaults(func=handler, _parser=parser)
     return parser
+
+def print_table(headers, data):
+    """
+    Print a table with the given data and headers.
+    """
+    column_widths = [max(len(str(x)) for x in col) for col in zip(*([headers] + data))]
+
+    # Print header
+    if headers:
+        print(" " + "  ".join(h.ljust(w) for h, w in zip(headers, column_widths)) + " ")
+        print(" ".join("=" * (w + 1) for w in column_widths))
+
+    # Print data rows
+    for row in data:
+        print(" " + "  ".join(str(x).ljust(w) for x, w in zip(row, column_widths)) + " ")
