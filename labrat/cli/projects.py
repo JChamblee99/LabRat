@@ -26,11 +26,11 @@ def handle_list_args(args):
     # Format map for table
     data = []
     for target, repos in projects.items():
-        for repo, users in repos.items():
-            usernames = [user.username for user in users]
+        for path_with_namespace, agents in repos.items():
+            usernames = [agent.username for agent in agents]
             data.append([
                 target,
-                repo,
+                path_with_namespace,
                 ", ".join(usernames)
             ])
 
