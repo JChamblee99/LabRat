@@ -74,7 +74,10 @@ class Agent:
 
             try:
                 response_json = r.json()
-                return response_json.get("new_token")
+                if "new_token" in response_json:
+                    return response_json.get("new_token")
+                else:
+                    return response_json.get("token")
             except ValueError:
                 return None
         elif self.is_admin:
