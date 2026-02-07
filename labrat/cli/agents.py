@@ -19,6 +19,8 @@ def build_parser(parsers):
     key_group.add_argument("-k", "--key", required=False, help="Public SSH key to add")
     key_group.add_argument("-K", "--key-file", required=False, help="Path to public SSH key file")
 
+    add_key_parser.add_argument("-t", "--title", required=False, help="Title for the SSH key", default="SSH Key")
+
     return parser
 
 def handle_list_args(args):
