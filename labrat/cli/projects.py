@@ -4,6 +4,8 @@ import re
 import os
 from urllib.parse import urlparse
 
+import gitlab
+
 from labrat.cli import common
 from labrat.core.agent import Agent
 from labrat.core.config import Config
@@ -17,6 +19,19 @@ def build_parser(parsers):
     
     clone_parser = common.add_filtered_parser(subparsers, "clone", handle_clone_args, help="Clone GitLab repositories")
     clone_parser.add_argument("-o", "--output", required=False, help="Output location for cloned repositories", default='./')
+
+    update_parser = common.add_filtered_parser(subparsers, "update", handle_update_args, help="Update GitLab repositories procedurally")
+    update_parser.add_argument("-F", "--file", required=True, help="Path to the remote file to update")
+
+    mechanism_group = update_parser.add_mutually_exclusive_group(required=True)
+    mechanism_group.add_argument("-c", "--content", required=False, help="Text content to replace the file with")
+    mechanism_group.add_argument("-C", "--content-file", required=False, help="Path to replacement file")
+    mechanism_group.add_argument("-p", "--pattern", required=False, help="String or regex pattern to find in the file")
+
+    update_parser.add_argument("-r", "--replace", required=False, help="String or pattern to replace the found text")
+
+    update_parser.add_argument("-m", "--commit-message", required=False, help="Commit message for the update", default="Update")
+    update_parser.add_argument("-b", "--branch", required=False, help="Branch to update", default="main")
 
     return subparsers
 
@@ -59,7 +74,56 @@ def handle_clone_args(args):
 
             print(f"[+] Cloned {target}/{path_with_namespace} to {to_path}")
 
+def handle_update_args(args):
+    projects = get_projects(args)
 
+    for target, repos in projects.items():
+        for path_with_namespace, agents in repos.items():
+            agent = agents[0]
+
+            try:
+                project = agent.gitlab.projects.get(path_with_namespace)
+                file = project.files.get(file_path=args.file, ref="main")
+                content = file.decode().decode("utf-8")
+
+                if args.content:
+                    new_content = args.content
+                elif args.content_file:
+                    with open(args.content_file, "r") as f:
+                        new_content = f.read()
+                elif args.pattern:
+                    if args.replace == None:
+                        print(f"[!] Failed to update: No replacement value provided with -r/--replace")
+                        return
+                    
+                    new_content = re.sub(args.pattern, args.replace, content, flags=re.MULTILINE)
+
+                if new_content == content:
+                    print(f"[-] No changes for {target}/{path_with_namespace}, skipping...")
+                    continue
+
+                commit = project.commits.create({
+                    "branch": args.branch,
+                    "commit_message": args.commit_message,
+                    "actions": [
+                        {
+                            "action": "update",
+                            "file_path": args.file,
+                            "content": new_content
+                        }
+                    ]
+                })
+
+                
+                print(f"[+] Updated {commit.web_url}")
+
+                diff = commit.diff()
+                if diff: print(diff[0].get("diff"))
+
+            except gitlab.exceptions.GitlabGetError as e:
+                continue
+            except Exception as e:
+                print(f"[!] Failed to update {target}/{path_with_namespace}: {e}")
 
 def get_projects(args):
     # Dictionary to store map of targets to repositories to a list of users
