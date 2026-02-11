@@ -22,7 +22,8 @@ class Agent:
         self.gitlab = gitlab.Gitlab(self.url, private_token=self.private_token, keep_base_url=True)
         try:
             self.gitlab.auth()
-        except gitlab.exceptions.GitlabAuthenticationError:
+        except Exception as e:
+            print(e)
             return False
 
         self.is_admin = getattr(self.gitlab.user, 'is_admin', False)
