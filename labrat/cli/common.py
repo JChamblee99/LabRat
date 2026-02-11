@@ -1,4 +1,5 @@
 import argparse
+import re
 
 def add_filtered_parser(subparsers, name, handler, aliases=[], help=None, filter_required=True, all_help="All items", filter_help="Filter by substring"):
     parser = subparsers.add_parser(name, aliases=aliases, help=help)
@@ -17,7 +18,7 @@ def print_table(headers, data):
     """
     Print a table with the given data and headers.
     """
-    column_widths = [max(len(str(x)) for x in col) for col in zip(*([headers] + data))]
+    column_widths = [max(len(re.sub(r'\x1b\[[0-9;]*m', '', str(x))) for x in col) for col in zip(*([headers] + data))]
 
     # Print header
     if headers:
