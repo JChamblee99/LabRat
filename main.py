@@ -1,6 +1,6 @@
 # labrat/main.py
 import argparse
-from labrat.cli import agents, auth, projects, run
+from labrat.cli import agents, auth, projects
 
 def main():
     parser = argparse.ArgumentParser(
@@ -9,7 +9,7 @@ def main():
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    for command in [agents, auth, projects, run]:
+    for command in [agents, auth, projects]:
         command.build_parser(subparsers)
 
     args = parser.parse_args()
