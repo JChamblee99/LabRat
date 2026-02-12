@@ -34,6 +34,7 @@ def build_parser(parsers):
 
     update_parser.add_argument("-m", "--commit-message", required=False, help="Commit message for the update", default="Update")
     update_parser.add_argument("-b", "--branch", required=False, help="Branch to update", default="main")
+    update_parser.add_argument("-u", "--user", required=False, help="User to perform the update")
 
     return subparsers
 
@@ -90,7 +91,13 @@ def handle_update_args(args):
 
     for target, repos in projects.items():
         for path_with_namespace, agents in repos.items():
-            agent = agents[0]
+            if args.user:
+                agent = next((a for a in agents if a.username == args.user), None)
+                if not agent:
+                    print(f"[!] Failed to update: User {args.user} does not have sufficient access to {path_with_namespace}")
+                    continue
+            else:
+                agent = agents[0]
 
             try:
                 project = agent.gitlab.projects.get(path_with_namespace)
