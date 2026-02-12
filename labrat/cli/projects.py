@@ -7,6 +7,7 @@ from urllib.parse import urlparse
 import gitlab
 
 from labrat.cli import common
+from labrat.core.utils import ansi_for_level
 from labrat.core.agent import Agent
 from labrat.core.config import Config
 
@@ -16,7 +17,8 @@ def build_parser(parsers):
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     list_parser = common.add_filtered_parser(subparsers, "list", handle_list_args, aliases=["ls"], help="List GitLab projects", filter_required=False)
-    
+    list_parser.add_argument("-m", "--min-access-level", required=False, type=int, help="Minimum access level to filter projects", default=0)
+
     clone_parser = common.add_filtered_parser(subparsers, "clone", handle_clone_args, help="Clone GitLab repositories")
     clone_parser.add_argument("-o", "--output", required=False, help="Output location for cloned repositories", default='./')
 
@@ -42,17 +44,26 @@ def handle_list_args(args):
     data = []
     for target, repos in projects.items():
         for path_with_namespace, agents in repos.items():
-            usernames = [agent.username for agent in agents]
+            access_levels = [get_project_access_level(agent, agent.gitlab.projects.get(path_with_namespace)) for agent in agents]
+            max_access_level = max(access_levels) if access_levels else 0
+
+            # color each username by that agent's access level (higher -> brighter)
+            usernames = []
+            for lvl, agent in zip(access_levels, agents):
+                color = ansi_for_level(lvl)
+                usernames.append(f"{color}{agent.username}\x1b[0m")
+
             data.append([
                 target,
                 path_with_namespace,
+                gitlab.const.AccessLevel(max_access_level).name.lower(),
                 ", ".join(usernames)
             ])
 
-    common.print_table(["Target", "Project", "Usernames"], data)
+    common.print_table(["Target", "Project", "Access Level", "Usernames"], data)
 
 def handle_clone_args(args):
-    projects = get_projects(args)
+    projects = get_projects(args, required_access_level=15)
 
     for target, repos in projects.items():
         for path_with_namespace, agents in repos.items():
@@ -75,7 +86,7 @@ def handle_clone_args(args):
             print(f"[+] Cloned {target}/{path_with_namespace} to {to_path}")
 
 def handle_update_args(args):
-    projects = get_projects(args)
+    projects = get_projects(args, required_access_level=30)
 
     for target, repos in projects.items():
         for path_with_namespace, agents in repos.items():
@@ -125,7 +136,7 @@ def handle_update_args(args):
             except Exception as e:
                 print(f"[!] Failed to update {target}/{path_with_namespace}: {e}")
 
-def get_projects(args):
+def get_projects(args, required_access_level=0):
     # Dictionary to store map of targets to repositories to a list of users
     repo_map = {}
 
@@ -141,7 +152,11 @@ def get_projects(args):
             # Filter by sbstring of fields
             if args.filter and args.filter.casefold() not in (f"{agent.url} {project.path_with_namespace} {agent.username}"):
                 continue
-            
+
+            access_level = get_project_access_level(agent, project)
+            if "min_access_level" in args and access_level < args.min_access_level or access_level < required_access_level:
+                continue
+
             domain = urlparse(agent.url).netloc
             if domain not in repo_map:
                 repo_map[domain] = {}
@@ -158,3 +173,12 @@ def get_projects(args):
         repo_map[target] = dict(sorted(repos.items(), key=lambda x: re.sub(r"[^a-zA-Z0-9]", "", x[0])))
 
     return repo_map
+
+def get_project_access_level(agent, project):
+    if project.permissions['project_access']:
+        access_level = int(project.permissions['project_access']['access_level'])
+    elif project.permissions['group_access']:
+        access_level = int(project.permissions['group_access']['access_level'])
+    else:
+        access_level = 50 if agent.is_admin else 15
+    return access_level

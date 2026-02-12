@@ -33,3 +33,15 @@ def parse_host_range(host_pattern):
 
     # If no range is detected, return the host as-is
     return [host_pattern]
+
+def ansi_for_level(level):
+    shades = [
+        "\x1b[0m",      # guest - none
+        "\x1b[0m",      # planner - none
+        "\x1b[32m",     # reporter - green
+        "\x1b[33m",     # developer - yellow
+        "\x1b[91m",     # maintainer - magenta
+        "\x1b[31;1m",   # owner - bright red (highest)
+    ]
+    idx = min(len(shades)-1, max(0, (level // 10)))
+    return shades[idx]
