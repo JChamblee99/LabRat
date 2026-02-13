@@ -14,6 +14,8 @@ def build_parser(parsers):
 
     list_parser = common.add_filtered_parser(subparsers, "list", handle_list_args, aliases=["ls"], help="List GitLab users", filter_required=False)
 
+    create_pat_parser = common.add_filtered_parser(subparsers, "create_pat", handle_create_pat_args, help="Create a personal access token", filter_required=True)
+
     return parser
 
 def handle_list_args(args):
@@ -61,3 +63,23 @@ def handle_list_args(args):
         data = [row for row in data if any(args.filter in str(item) for item in row)]
 
     common.print_table(headers, data)
+
+def handle_create_pat_args(args):
+    config = Config()
+    sections = config.sections()
+
+    for section, agent in config:
+        try:
+            agent.auth()
+        except Exception as e:
+            continue
+
+        if agent.is_admin:
+            users = agent.gitlab.users.list(all=True)
+            for user in users:
+                sect = f"{user.username}@{urlparse(agent.url).hostname}"
+                if sect not in sections:
+                    token = agent.create_pat(user_id=user.id)
+                    agent_user = Agent(agent.url, username=user.username, private_token=token)
+                    config[sect] = agent_user.to_dict()
+                    print(f"[+] Authenticated as {sect} ({'admin' if agent_user.is_admin else 'user'}) with {agent_user.private_token}")
