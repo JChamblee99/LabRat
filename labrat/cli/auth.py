@@ -87,7 +87,7 @@ def auth(args):
                 try:
                     agent.auth()
                     config[section] = agent.to_dict()
-                    print(f"[*] Authenticated as {section} with {agent.private_token}")
+                    print(f"[+] Authenticated as {section} with {agent.private_token}")
                     continue
                 except Exception as e:
                     pass
@@ -97,7 +97,7 @@ def auth(args):
                 agent.login(username, password, use_ldap=args.use_ldap)
                 agent.auth(private_token=agent.create_pat())
                 config[section] = agent.to_dict()
-                print(f"[*] Authenticated as {section} ({'admin' if agent.is_admin else 'user'}) with {agent.private_token}")
+                print(f"[+] Authenticated as {section} ({'admin' if agent.is_admin else 'user'}) with {agent.private_token}")
                 continue
             except Exception as e:
                 print(f"[-] Authentication failed for {section}: {e}")
