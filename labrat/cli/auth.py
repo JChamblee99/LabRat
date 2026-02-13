@@ -86,8 +86,8 @@ def auth(args):
 
                 try:
                     agent.auth()
-                    print(f"[*] Authenticated as {section} with {agent.private_token}")
                     config[section] = agent.to_dict()
+                    print(f"[*] Authenticated as {section} with {agent.private_token}")
                     continue
                 except Exception as e:
                     pass
