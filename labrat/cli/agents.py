@@ -33,7 +33,7 @@ def handle_list_args(args):
     )
 
     # Prepare table
-    headers = ["Url", "Username", "Type", "Private Token"]
+    headers = ["Url", "Username", "Type", "Password", "Private Token"]
     data = []
 
     for section in sorted_sections:
@@ -45,6 +45,7 @@ def handle_list_args(args):
             config[section].get("url", ""),
             config[section].get("username", ""),
             "admin" if config[section].getboolean("is_admin", False) else "user",
+            config[section].get("password", ""),
             config[section].get("private_token", "")
         ])
 
