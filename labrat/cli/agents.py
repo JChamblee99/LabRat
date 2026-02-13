@@ -73,11 +73,9 @@ def handle_add_key_args(args):
     config = Config()
     
     for section, agent in config.filter(args.filter):
-        if agent.auth():
-            try:
-                agent.add_ssh_key(args.title, key)
-                print(f"[+] Added SSH key to {section}")
-            except Exception as e:
-                print(f"[-] Failed to add SSH key to {section}: {e}")
-        else:
-            print(f"[-] Authentication failed for {section}")
+        try:
+            agent.auth()
+            agent.add_ssh_key(args.title, key)
+            print(f"[+] Added SSH key to {section}")
+        except Exception as e:
+            print(f"[-] Failed to add SSH key to {section}: {e}")

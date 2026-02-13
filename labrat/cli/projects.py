@@ -149,10 +149,11 @@ def get_projects(args, required_access_level=0):
 
     # Iterate through the configuration
     for section, agent in Config():
-        if not agent.auth():
-            print(f"[-] Authentication failed for {section}")
+        try:
+            agent.auth()
+        except Exception as e:
             continue
-        
+
         # Fetch the list of projects for the agent
         projects = agent.gitlab.projects.list(all=True)
         for project in projects:

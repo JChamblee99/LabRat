@@ -23,12 +23,9 @@ class Agent:
         try:
             self.gitlab.auth()
         except Exception as e:
-            print(e)
-            return False
+            raise e
 
         self.is_admin = getattr(self.gitlab.user, 'is_admin', False)
-        
-        return True
 
     def get_csrf_token(self):
         r = self.session.get(f"{self.url}/")

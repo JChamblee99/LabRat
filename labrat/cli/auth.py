@@ -41,20 +41,22 @@ def reauth(args):
         if args.username and args.username != agent.username:
             continue
 
-        if agent.auth():
-            print(f"[+] Authenticated as {section} with {agent.private_token}")
+        try:
+            agent.auth()
             config[section] = agent.to_dict()
+            print(f"[+] Authenticated as {section} with {agent.private_token}")
             continue
-        elif agent.username and agent.password:
-            print(f"[-] Authentication failed for {section}, re-authenticating...")
-            agent.login()
-            token = agent.create_pat()
-            if token and agent.auth(private_token=token):
-                print(f"[+] Re-authenticated as {section} with {agent.private_token}")
-                config[section] = agent.to_dict()
-                continue
+        except Exception as e:
+            pass
 
-        print(f"[-] Re-authentication failed for {section}")
+        try:
+            agent.login()
+            agent.auth(private_token=agent.create_pat())
+            config[section] = agent.to_dict()
+            print(f"[+] Authenticated as {section} with {agent.private_token}")
+            continue
+        except Exception as e:
+            print(f"[-] Re-authentication failed for {section}: {e}")
 
 def auth(args):
     config = Config()
@@ -82,19 +84,20 @@ def auth(args):
             if c:
                 agent = Agent.from_dict(c)
 
-                if agent.auth():
+                try:
+                    agent.auth()
                     print(f"[*] Authenticated as {section} with {agent.private_token}")
                     config[section] = agent.to_dict()
                     continue
-                else:
-                    print(f"[-] Authentication failed for {section}, re-authenticating...")
+                except Exception as e:
+                    pass
 
-            agent = Agent(target)
-            agent.login(username, password, use_ldap=args.use_ldap)
-            token = agent.create_pat()
-            if token and agent.auth(private_token=token):
-                print(f"[*] Authenticated as {section} ({'admin' if agent.is_admin else 'user'}) with {token}")
+            try:
+                agent = Agent(target)
+                agent.login(username, password, use_ldap=args.use_ldap)
+                agent.auth(private_token=agent.create_pat())
                 config[section] = agent.to_dict()
+                print(f"[*] Authenticated as {section} ({'admin' if agent.is_admin else 'user'}) with {agent.private_token}")
                 continue
-            else:
-                print(f"[-] Authentication failed for {section}")
+            except Exception as e:
+                print(f"[-] Authentication failed for {section}: {e}")
