@@ -79,7 +79,10 @@ def handle_create_pat_args(args):
             for user in users:
                 sect = f"{user.username}@{urlparse(agent.url).hostname}"
                 if sect not in sections:
-                    token = agent.create_pat(user_id=user.id)
-                    agent_user = Agent(agent.url, username=user.username, private_token=token)
-                    config[sect] = agent_user.to_dict()
-                    print(f"[+] Authenticated as {sect} ({'admin' if agent_user.is_admin else 'user'}) with {agent_user.private_token}")
+                    try:
+                        token = agent.create_pat(user_id=user.id)
+                        agent_user = Agent(agent.url, username=user.username, private_token=token)
+                        config[sect] = agent_user.to_dict()
+                        print(f"[+] Authenticated as {sect} ({'admin' if agent_user.is_admin else 'user'}) with {agent_user.private_token}")
+                    except Exception as e:
+                        print(f"[!] Failed to create PAT for {sect}: {e}")
