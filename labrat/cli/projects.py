@@ -30,7 +30,7 @@ def build_parser(parsers):
     create_pat_parser.add_argument("-s", "--scopes", required=False, help="Comma-separated list of scopes for the personal access token", default="api,read_repository,write_repository")
     create_pat_parser.add_argument("-u", "--user", required=False, help="User to perform the creation")
 
-    update_parser = common.add_filtered_parser(subparsers, "update", handle_update_args, help="Update GitLab repositories procedurally")
+    update_parser = common.add_filtered_parser(subparsers, "update", handle_update_args, help="Update GitLab repositories procedurally", filter_required=True)
     update_parser.add_argument("-F", "--file", required=True, help="Path to the remote file to update")
 
     mechanism_group = update_parser.add_mutually_exclusive_group(required=True)
