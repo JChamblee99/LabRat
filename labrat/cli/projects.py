@@ -1,4 +1,5 @@
 import argparse
+import datetime
 import git
 import re
 import os
@@ -21,6 +22,13 @@ def build_parser(parsers):
 
     clone_parser = common.add_filtered_parser(subparsers, "clone", handle_clone_args, help="Clone GitLab repositories")
     clone_parser.add_argument("-o", "--output", required=False, help="Output location for cloned repositories", default='./')
+
+    create_pat_parser = common.add_filtered_parser(subparsers, "create_pat", handle_create_pat_args, help="Create a personal access token", filter_required=True)
+    create_pat_parser.add_argument("-l", "--access-level", required=False, type=int, help="Access level for the personal access token", default=50)
+    create_pat_parser.add_argument("-d", "--days", required=False, type=int, help="Number of days until the token expires", default=60)
+    create_pat_parser.add_argument("-n", "--token-name", required=False, help="Name for the personal access token", default="project_bot")
+    create_pat_parser.add_argument("-s", "--scopes", required=False, help="Comma-separated list of scopes for the personal access token", default="api,read_repository,write_repository")
+    create_pat_parser.add_argument("-u", "--user", required=False, help="User to perform the creation")
 
     update_parser = common.add_filtered_parser(subparsers, "update", handle_update_args, help="Update GitLab repositories procedurally")
     update_parser.add_argument("-F", "--file", required=True, help="Path to the remote file to update")
@@ -85,6 +93,39 @@ def handle_clone_args(args):
                 continue
 
             print(f"[+] Cloned {target}/{path_with_namespace} to {to_path}")
+
+def handle_create_pat_args(args):
+    config = Config()
+    sections = config.sections()
+    projects = get_projects(args, required_access_level=40)
+
+    for target, repos in projects.items():
+        for path_with_namespace, agents in repos.items():
+            if args.user:
+                agent = next((a for a in agents if a.username == args.user), None)
+                if not agent:
+                    print(f"[!] Failed to update: User {args.user} does not have sufficient access to {path_with_namespace}")
+                    continue
+            else:
+                agent = agents[0]
+            
+            try:
+                project = agent.gitlab.projects.get(path_with_namespace)
+                name = f"{args.token_name}_{project.id}"
+                sect = f"{name}@{urlparse(agent.url).hostname}"
+                if sect not in sections:
+                    req = project.access_tokens.create({
+                        "name": name,
+                        "access_level": args.access_level,
+                        "scopes": args.scopes.split(","),
+                        "expires_at": (datetime.datetime.now() + datetime.timedelta(days=args.days)).strftime("%Y-%m-%d")
+                    })
+                    token = req.token
+                    agent_project = Agent(agent.url, username=name, private_token=token)
+                    config[sect] = agent_project.to_dict()
+                    print(f"[+] Created access token for {path_with_namespace}: {token}")
+            except Exception as e:
+                print(f"[!] Failed to create access token for {path_with_namespace}: {e}")
 
 def handle_update_args(args):
     projects = get_projects(args, required_access_level=30)
