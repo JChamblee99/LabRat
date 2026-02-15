@@ -14,7 +14,7 @@ def add_filtered_parser(subparsers, name, handler, aliases=[], help=None, filter
     parser.set_defaults(func=handler, _parser=parser)
     return parser
 
-def print_table(headers, data):
+def print_table(headers, data, sort_key=None):
     """
     Print a table with the given data and headers.
     """
@@ -24,6 +24,10 @@ def print_table(headers, data):
     if headers:
         print(" " + "  ".join(h.ljust(w) for h, w in zip(headers, column_widths)) + " ")
         print(" ".join("=" * (w + 1) for w in column_widths))
+
+    # Sort data by the specified key
+    if sort_key is not None:
+        data = sorted(data, key=lambda x: x[headers.index(sort_key)])
 
     # Print data rows
     for row in data:
