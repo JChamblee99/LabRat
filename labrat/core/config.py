@@ -6,10 +6,11 @@ from pathlib import Path
 from labrat.core.agent import Agent
 
 class Config:
-    def __init__(self, config_file="~/.python-gitlab.cfg"):
+    def __init__(self, config_file="~/.python-gitlab.cfg", preauth=False):
         self.config_file = str(Path(config_file).expanduser())
         self._config = configparser.ConfigParser()
         self._config.read(self.config_file)
+        self.preauth = preauth
 
     def __getitem__(self, section):
         try:
@@ -37,7 +38,6 @@ class Config:
                         section,
                         data.get("url", ""),
                         data.get("username", ""),
-                        "admin" if data.getboolean("is_admin", False) else "user",
                         data.get("private_token", "")
                     ]
 
@@ -45,6 +45,13 @@ class Config:
                         continue
 
                 agent = Agent.from_dict(data)  # Create an Agent instance from the section data
+
+                if self.preauth:
+                    try:
+                        agent.auth()
+                    except Exception as e:
+                        pass
+
                 yield section, agent
 
     def filter(self, keyword):

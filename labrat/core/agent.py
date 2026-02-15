@@ -1,31 +1,37 @@
+from urllib.parse import urlparse
 import requests
 from bs4 import BeautifulSoup
 import gitlab
 
 class Agent:
-    def __init__(self, url, use_ldap=False, username=None, password=None, private_token=None, is_admin=False, api_version=4):
+    def __init__(self, url, use_ldap=False, username=None, password=None, private_token=None, api_version=4):
         self.url = url
+        self.host = urlparse(url).hostname
         self.use_ldap = use_ldap
         self.username = username
         self.password = password
         self.private_token = private_token
-        self.is_admin = is_admin
         self.api_version = api_version
 
         self.session = requests.Session()
         self.gitlab = None
+        self.authenticated = False
+        self.id = None
+        self.is_admin = False
+        self.is_bot = False
 
     def auth(self, private_token=None):
         if private_token is not None:
             self.private_token = private_token
 
-        self.gitlab = gitlab.Gitlab(self.url, private_token=self.private_token, keep_base_url=True)
-        try:
-            self.gitlab.auth()
-        except Exception as e:
-            raise e
+        self.gitlab = gitlab.Gitlab(self.url, private_token=self.private_token, keep_base_url=True, api_version=self.api_version)
+        self.gitlab.auth()
+        self.authenticated = True
 
+        user = self.gitlab.user
+        self.id = user.id
         self.is_admin = getattr(self.gitlab.user, 'is_admin', False)
+        self.is_bot = getattr(self.gitlab.user, 'bot', False)
 
     def get_csrf_token(self):
         r = self.session.get(f"{self.url}/")
@@ -56,7 +62,7 @@ class Agent:
             }
             self.session.post(f"{self.url}/users/sign_in", data=payload)
 
-    def create_pat(self, user_id=None, token_name="labrat", token_scopes=["api", "create_runner"]):
+    def create_pat(self, user_id=None, token_name="private token", token_scopes=["api", "read_repository", "write_repository"]):
         if user_id is None:
             csrf_token = self.get_csrf_token()
             payload = {
@@ -113,7 +119,6 @@ class Agent:
             username=data.get("username"),
             password=data.get("password"),
             private_token=data.get("private_token"),
-            is_admin=(True if data.get("is_admin") == "True" else False),
             use_ldap=(True if data.get("use_ldap") == "True" else False),
             api_version=data.get("api_version", 4)
         )

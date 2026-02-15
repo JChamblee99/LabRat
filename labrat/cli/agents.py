@@ -4,10 +4,14 @@ from urllib.parse import urlparse
 from labrat.cli import common
 from labrat.core.agent import Agent
 from labrat.core.config import Config
+from labrat.controllers.agents import Agents
 
 
 def build_parser(parsers):
+    controller = Agents()
+
     parser = parsers.add_parser("agents", help="Manage GitLab agents")
+    parser.set_defaults(controller=controller)
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     list_parser = common.add_filtered_parser(subparsers, "list", handle_list_args, aliases=["ls"], help="List GitLab servers", filter_required=False)
@@ -24,36 +28,22 @@ def build_parser(parsers):
     return parser
 
 def handle_list_args(args):
-    config = Config()
-
-    # Extract and sort sections by domain
-    sorted_sections = sorted(
-        config.sections(),  # Get all sections
-        key=lambda section: urlparse(config[section].get("url", "")).netloc  # Extract domain
-    )
-
     # Prepare table
-    headers = ["Url", "Username", "Type", "Password", "Private Token"]
+    headers = ["Url", "ID", "Username", "Is Admin", "Is Bot", "Password", "Private Token"]
     data = []
 
-    for section in sorted_sections:
-        if section == "DEFAULT" or section == "global":
-            continue
-        
-        domain = urlparse(config[section].get("url", "")).netloc
+    for section, agent in args.controller.list(args.filter):
         data.append([
-            config[section].get("url", ""),
-            config[section].get("username", ""),
-            "admin" if config[section].getboolean("is_admin", False) else "user",
-            config[section].get("password", ""),
-            config[section].get("private_token", "")
+            agent.url,
+            agent.id,
+            agent.username,
+            agent.is_admin,
+            agent.is_bot,
+            agent.password,
+            agent.private_token
         ])
 
-    # Filter data if filter argument is provided
-    if args.filter:
-        data = [row for row in data if any(args.filter in str(item) for item in row)]
-
-    common.print_table(headers, data)
+    common.print_table(headers, data, "Url")
 
 def handle_delete_args(args):
     config = Config()
