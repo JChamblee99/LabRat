@@ -29,14 +29,15 @@ def build_parser(parsers):
 
 def handle_list_args(args):
     # Prepare table
-    headers = ["Url", "ID", "Username", "Is Admin", "Is Bot", "Password", "Private Token"]
+    headers = ["Url", "ID", "Username", "Authenticated", "Is Admin", "Is Bot", "Password", "Private Token"]
     data = []
 
-    for section, agent in args.controller.list(args.filter):
+    for agent in args.controller.list(args.filter):
         data.append([
             agent.url,
             agent.id,
             agent.username,
+            agent.authenticated,
             agent.is_admin,
             agent.is_bot,
             agent.password,
@@ -46,12 +47,9 @@ def handle_list_args(args):
     common.print_table(headers, data, "Url")
 
 def handle_delete_args(args):
-    config = Config()
-
     # Delete configs for filtered sections
-    for section, _ in config.filter(args.filter):
-        config.remove_section(section)
-        print(f"[-] Deleted {section} from config")
+    for agent in args.controller.delete(args.filter):
+        print(f"[-] Deleted {agent.username}@{agent.url} from config")
 
 def handle_add_key_args(args):
     if args.key:
@@ -60,12 +58,8 @@ def handle_add_key_args(args):
         with open(args.key_file, "r") as f:
             key = f.read().strip()
 
-    config = Config()
-    
-    for section, agent in config.filter(args.filter):
-        try:
-            agent.auth()
-            agent.add_ssh_key(args.title, key)
-            print(f"[+] Added SSH key to {section}")
-        except Exception as e:
-            print(f"[-] Failed to add SSH key to {section}: {e}")
+    for agent, err in args.controller.add_ssh_key(args.filter, args.title, key):
+        if err is None:
+            print(f"[+] Added SSH key to {agent.username}@{agent.url}")
+        else:
+            print(f"[-] Failed to add SSH key to {agent.username}@{agent.url}: {err}")
