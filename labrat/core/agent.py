@@ -38,12 +38,7 @@ class Agent:
         soup = BeautifulSoup(r.text, "html.parser")
         return soup.find("meta", {"name": "csrf-token"})["content"]
 
-    def login(self, username=None, password=None, use_ldap=False):
-        if username is not None and password is not None:
-            self.username = username
-            self.password = password
-            self.use_ldap = use_ldap
-
+    def login(self):
         csrf_token = self.get_csrf_token()
         if self.use_ldap:
             payload = {
