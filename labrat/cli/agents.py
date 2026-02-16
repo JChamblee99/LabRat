@@ -52,12 +52,14 @@ def handle_delete_args(args):
         print(f"[-] Deleted {agent.username}@{agent.url} from config")
 
 def handle_add_key_args(args):
+    # Prepare SSH key
     if args.key:
         key = args.key
     elif args.key_file:
         with open(args.key_file, "r") as f:
             key = f.read().strip()
 
+    # Add SSH key to agents
     for agent, err in args.controller.add_ssh_key(args.filter, args.title, key):
         if err is None:
             print(f"[+] Added SSH key to {agent.username}@{agent.url}")
