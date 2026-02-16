@@ -15,10 +15,10 @@ class Agent:
 
         self.session = requests.Session()
         self.gitlab = None
-        self.authenticated = False
         self.id = None
         self.is_admin = False
         self.is_bot = False
+        self.is_authenticated = False
 
     def auth(self, private_token=None):
         if private_token is not None:
@@ -26,7 +26,7 @@ class Agent:
 
         self.gitlab = gitlab.Gitlab(self.url, private_token=self.private_token, keep_base_url=True, api_version=self.api_version)
         self.gitlab.auth()
-        self.authenticated = True
+        self.is_authenticated = True
 
         user = self.gitlab.user
         self.id = user.id

@@ -30,7 +30,7 @@ def handle_list_args(args):
             agent.url,
             agent.id,
             agent.username,
-            agent.authenticated,
+            agent.is_authenticated,
             agent.is_admin,
             agent.is_bot,
             agent.password,
