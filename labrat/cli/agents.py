@@ -3,10 +3,7 @@ from labrat.controllers.agents import Agents
 
 
 def build_parser(parsers):
-    controller = Agents()
-
     parser = parsers.add_parser("agents", help="Manage GitLab agents")
-    parser.set_defaults(controller=controller)
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     list_parser = common.add_filtered_parser(subparsers, "list", handle_list_args, aliases=["ls"], help="List GitLab servers", filter_required=False)
@@ -20,6 +17,7 @@ def build_parser(parsers):
 
     add_key_parser.add_argument("-t", "--title", required=False, help="Title for the SSH key", default="SSH Key")
 
+    parser.set_defaults(controller=Agents())
     return parser
 
 def handle_list_args(args):
@@ -56,7 +54,7 @@ def handle_add_key_args(args):
 
     # Add SSH key to agents
     for agent, err in args.controller.add_ssh_key(args.filter, args.title, key):
-        if err is None:
-            print(f"[+] Added SSH key to {agent.username}@{agent.url}")
-        else:
+        if err:
             print(f"[-] Failed to add SSH key to {agent.username}@{agent.url}: {err}")
+        else:
+            print(f"[+] Added SSH key to {agent.username}@{agent.url}")
