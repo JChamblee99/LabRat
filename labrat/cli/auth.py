@@ -1,8 +1,4 @@
-import argparse
-from urllib.parse import urlparse
-
-from labrat.core.agent import Agent
-from labrat.core.config import Config
+from labrat.controllers.agents import Agents
 from labrat.core.utils import parse_host_range
 
 def build_parser(parsers):
@@ -16,6 +12,7 @@ def build_parser(parsers):
     parser.add_argument("-r", "--re-auth", action="store_true", help="Re-authenticate with stored credentials")
 
     parser.set_defaults(func=handle_args, _parser=parser)
+    parser.set_defaults(controller=Agents())
     return parser
 
 def handle_args(args):
@@ -26,41 +23,15 @@ def handle_args(args):
     else:
         getattr(args, "_parser", None).print_help()
         return
-    
 
 def reauth(args):
-    config = Config()
-    
-    # Iterate config sections and re-authenticate
-    for section, agent in config:
-        # Filter by target if specified
-        if args.target and args.target not in agent.url:
-            continue
-
-        # Filter by username if specified
-        if args.username and args.username != agent.username:
-            continue
-
-        try:
-            agent.auth()
-            config[section] = agent.to_dict()
-            print(f"[+] Authenticated as {section} with {agent.private_token}")
-            continue
-        except Exception as e:
-            pass
-
-        try:
-            agent.login()
-            agent.auth(private_token=agent.create_pat())
-            config[section] = agent.to_dict()
-            print(f"[+] Authenticated as {section} with {agent.private_token}")
-            continue
-        except Exception as e:
-            print(f"[-] Re-authentication failed for {section}: {e}")
+    for agent, err in args.controller.reauth(target=args.target, username=args.username):
+        if err:
+            print(f"[-] Re-authentication failed for {agent.label}: {err}")
+        else:
+            print(f"[+] Authenticated {agent.label} with {agent.private_token}")
 
 def auth(args):
-    config = Config()
-
     # Build the list of users
     users = []
     if args.username and args.password:
@@ -75,29 +46,8 @@ def auth(args):
     targets = parse_host_range(args.target)
 
     # Iterate over each user and target
-    for username, password in users:
-        for target in targets:
-            domain = urlparse(target).hostname
-            section = f"{username}@{domain}"
-
-            c = config[section]
-            if c:
-                agent = Agent.from_dict(c)
-
-                try:
-                    agent.auth()
-                    config[section] = agent.to_dict()
-                    print(f"[+] Authenticated as {section} with {agent.private_token}")
-                    continue
-                except Exception as e:
-                    pass
-
-            try:
-                agent = Agent(target)
-                agent.login(username, password, use_ldap=args.use_ldap)
-                agent.auth(private_token=agent.create_pat())
-                config[section] = agent.to_dict()
-                print(f"[+] Authenticated as {section} ({'admin' if agent.is_admin else 'user'}) with {agent.private_token}")
-                continue
-            except Exception as e:
-                print(f"[-] Authentication failed for {section}: {e}")
+    for agent, err in args.controller.auth(targets, users, use_ldap=args.use_ldap):
+        if err:
+            print(f"[-] Authentication failed for {agent.label}: {err}")
+        else:
+            print(f"[+] Authenticated {agent.label} {'(admin)' if agent.is_admin else ''} with {agent.private_token}")
