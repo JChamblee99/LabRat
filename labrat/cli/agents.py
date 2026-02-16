@@ -1,9 +1,4 @@
-import argparse
-from urllib.parse import urlparse
-
 from labrat.cli import common
-from labrat.core.agent import Agent
-from labrat.core.config import Config
 from labrat.controllers.agents import Agents
 
 
