@@ -42,7 +42,7 @@ def handle_list_args(args):
 def handle_delete_args(args):
     # Delete configs for filtered sections
     for agent in args.controller.delete(args.filter):
-        print(f"[-] Deleted {agent.username}@{agent.host} from config")
+        print(f"[-] Deleted {agent.label} from config")
 
 def handle_add_key_args(args):
     # Prepare SSH key
@@ -55,6 +55,6 @@ def handle_add_key_args(args):
     # Add SSH key to agents
     for agent, err in args.controller.add_ssh_key(args.filter, args.title, key):
         if err:
-            print(f"[-] Failed to add SSH key to {agent.username}@{agent.host}: {err}")
+            print(f"[-] Failed to add SSH key to {agent.label}: {err}")
         else:
-            print(f"[+] Added SSH key to {agent.username}@{agent.host}")
+            print(f"[+] Added SSH key to {agent.label}")

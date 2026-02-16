@@ -19,6 +19,7 @@ class Agent:
         self.is_admin = False
         self.is_bot = False
         self.is_authenticated = False
+        self.label = f"{self.username}@{self.host}"
 
     def auth(self, private_token=None):
         if private_token is not None:
