@@ -50,4 +50,4 @@ def auth(args):
         if err:
             print(f"[-] Authentication failed for {agent.label}: {err}")
         else:
-            print(f"[+] Authenticated {agent.label} {'(admin)' if agent.is_admin else ''} with {agent.private_token}")
+            print(f"[+] Authenticated {agent.label}{' (admin)' if agent.is_admin else ''} with {agent.private_token}")
