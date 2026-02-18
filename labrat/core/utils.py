@@ -45,3 +45,32 @@ def ansi_for_level(level):
     ]
     idx = min(len(shades)-1, max(0, (level // 10)))
     return shades[idx]
+
+def obj_filter(obj, filter_strings):
+    result = False
+    for filter_string in filter_strings:
+        # Determine whether to use simple or complex filtering
+        if "=" in filter_string:
+            # Complex filtering with operator
+            equals_op = "!=" not in filter_string
+            filter = filter_string.split("!=") if "!=" in filter_string else filter_string.split("=")
+        else:
+            # Simple filtering on all attribute values
+            equals_op = True
+            filter = ["_attrs", filter_string]
+
+        value = getattr(obj, filter[0], None)
+        if value is not None:
+            # Exclude keys from search
+            if isinstance(value, dict):
+                value = str(value.values())
+            else:
+                value = str(value)
+
+            match = re.search(filter[1], value) is not None
+            if match == equals_op:
+                result = True
+            else:
+                return False
+
+    return result
