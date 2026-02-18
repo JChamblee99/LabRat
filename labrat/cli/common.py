@@ -8,9 +8,9 @@ def add_filtered_parser(subparsers, name, handler, aliases=[], help=None, filter
 
     if filter_required:
         filter_group.add_argument("-a", "--all", action="store_true", help=all_help)
-        
-    filter_group.add_argument("-f", "--filter", help=filter_help)
-    
+
+    filter_group.add_argument("-f", "--filter", action="append", help=filter_help)
+
     parser.set_defaults(func=handler, _parser=parser)
     return parser
 
