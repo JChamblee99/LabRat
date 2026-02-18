@@ -6,11 +6,12 @@ from pathlib import Path
 from labrat.core.agent import Agent
 
 class Config:
-    def __init__(self, config_file="~/.python-gitlab.cfg", preauth=False):
+    def __init__(self, config_file="~/.python-gitlab.cfg", preauth=False, authed_only=False):
         self.config_file = str(Path(config_file).expanduser())
         self._config = configparser.ConfigParser()
         self._config.read(self.config_file)
         self.preauth = preauth
+        self.authed_only = authed_only
 
     def __getitem__(self, section):
         try:
@@ -46,19 +47,23 @@ class Config:
 
                 agent = Agent.from_dict(data)  # Create an Agent instance from the section data
 
-                if self.preauth:
+                if self.preauth or self.authed_only:
                     try:
                         agent.auth()
                     except Exception as e:
                         pass
 
-                yield section, agent
+                if agent.is_authenticated or not self.authed_only:
+                    yield section, agent
 
     def filter(self, keyword):
         return self.__iter__(keyword)
 
     def sections(self):
         return self._config.sections()
+        
+    def has_section(self, section):
+        return self._config.has_section(section)
     
     def remove_section(self, section):
         if section in self._config:
