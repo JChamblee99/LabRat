@@ -68,7 +68,7 @@ def obj_filter(obj, filter_strings):
             else:
                 value = str(value)
 
-            match = re.search(filter[1], value) is not None
+            match = re.search(filter[1], value, flags=re.IGNORECASE) is not None
             if match == equals_op:
                 result = True
             else:
