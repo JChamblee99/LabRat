@@ -4,33 +4,21 @@ def parse_host_range(host_pattern):
     """
     Parse a host pattern and generate a list of individual host addresses.
     Supports:
-    - IP ranges like "10.10.101-115.80"
-    - Hostname ranges like "team{01...15}.farm.local"
+    - Parse brace expansion "team{01..15}.ccdc.local"
     """
     hosts = []
 
-    # Match IP range pattern (e.g., "10.10.101-115.80")
-    ip_range_match = re.match(r"([0-9.]*)\.(\d+)-(\d+)([0-9.:]*)", host_pattern)
-    if ip_range_match:
-        prefix = ip_range_match.group(1)
-        start = int(ip_range_match.group(2))
-        end = int(ip_range_match.group(3))
-        suffix = ip_range_match.group(4)
-        for i in range(start, end + 1):
-            hosts.append(f"{prefix}.{i}{suffix}")
-        return hosts
-
-    # Match hostname range pattern (e.g., "team{01..15}.farm.local")
-    hostname_range_match = re.match(r"(.*)\{(\d+)\.\.(\d+)\}(.*)", host_pattern)
-    if hostname_range_match:
-        prefix = hostname_range_match.group(1)
-        start = hostname_range_match.group(2)
-        end = hostname_range_match.group(3)
-        suffix = hostname_range_match.group(4)
+    # Match brace expansion patter (e.g., "team{01..15}.ccdc.local")
+    brace_expansion_match = re.match(r"(.*)\{(\d+)\.\.(\d+)\}(.*)", host_pattern)
+    if brace_expansion_match:
+        prefix = brace_expansion_match.group(1)
+        start = brace_expansion_match.group(2)
+        end = brace_expansion_match.group(3)
+        suffix = brace_expansion_match.group(4)
 
         # Padding for leading zeros
         padding = max(len(start), len(end)) if start[0] == '0' or end[0] == '0' else 0
-        
+
         for i in range(int(start), int(end) + 1):
             hosts.append(f"{prefix}{i:0{padding}d}{suffix}")
         return hosts
