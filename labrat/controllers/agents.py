@@ -20,14 +20,14 @@ class Agents:
                 except Exception as e:
                     yield agent, e
 
-    def reauth(self, target=None, username=None):
+    def reauth(self, targets=None, users=None):
         for section, agent in self.config:
             # Filter by target if specified
-            if target and target not in agent.url:
+            if targets and agent.url not in targets:
                 continue
 
             # Filter by username if specified
-            if username and username != agent.username:
+            if users and agent.username not in users:
                 continue
 
             try:

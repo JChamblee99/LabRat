@@ -3,8 +3,9 @@ from labrat.core.utils import parse_host_range
 
 def build_parser(parsers):
     parser = parsers.add_parser("auth", help="Authenticate to GitLab server(s)")
-    
-    parser.add_argument("-t", "--target", required=False, help="GitLab server URL or pattern")
+
+    parser.add_argument("-t", "--target", required=False, nargs="*", action="append", help="GitLab server URL or pattern")
+    parser.add_argument("-T", "--target-file", required=False, help="Path to file containing GitLab server URLs or patterns")
     parser.add_argument("-u", "--username", required=False, help="Username or e-mail for authentication")
     parser.add_argument("-p", "--password", required=False, help="Password for authentication")
     parser.add_argument("-C", "--combo-list", required=False, help="Path to the combo list file")
@@ -16,25 +17,16 @@ def build_parser(parsers):
     return parser
 
 def handle_args(args):
-    if args.re_auth:
-        reauth(args)
-    elif args.target and (args.username and args.password or args.combo_list):
+    if args.re_auth or (args.target or args.target_file) and (args.username and args.password or args.combo_list):
         auth(args)
     else:
         getattr(args, "_parser", None).print_help()
         return
 
-def reauth(args):
-    for agent, err in args.controller.reauth(target=args.target, username=args.username):
-        if err:
-            print(f"[-] Re-authentication failed for {agent.label}: {err}")
-        else:
-            print(f"[+] Authenticated {agent.label} with {agent.private_token}")
-
 def auth(args):
     # Build the list of users
     users = []
-    if args.username and args.password:
+    if args.username:
         users = [(args.username, args.password)]
     elif args.combo_list:
         with open(args.combo_list, "r") as f:
@@ -43,10 +35,18 @@ def auth(args):
                 users.append((username, password))
 
     # Build the list of targets
-    targets = parse_host_range(args.target)
+    targets = []
+    if args.target:
+        target_args = [target for sublist in args.target for target in sublist]
+        for target in target_args:
+            targets.extend(parse_host_range(target))
+    elif args.target_file:
+        with open(args.target_file, "r") as f:
+            for line in f:
+                targets.extend(parse_host_range(line.strip()))
 
     # Iterate over each user and target
-    for agent, err in args.controller.auth(targets, users, use_ldap=args.use_ldap):
+    for agent, err in args.controller.reauth(targets=targets, users=[user[0] for user in users]) if args.re_auth else args.controller.auth(targets, users, use_ldap=args.use_ldap):
         if err:
             print(f"[-] Authentication failed for {agent.label}: {err}")
         else:
