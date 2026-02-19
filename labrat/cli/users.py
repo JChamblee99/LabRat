@@ -22,23 +22,19 @@ def build_parser(parsers):
     return parser
 
 def handle_list_args(args):
-    headers = ["Url", "ID", "Username", "Is Agent", "Is Admin", "Is Bot"]
-    data = dict()
+    headers = ["Url", "ID", "Username", "Name", "Is Agent", "Is Admin", "Is Bot"]
+    data = []
 
-    for agent, user in args.controller.list(filter=args.filter):
-        section = f"{user.id}@{urlparse(agent.url).hostname}"
-        if section not in data.keys() or agent.is_admin:
-            data[section] = [
-                agent.url,
-                user.id,
-                user.username,
-                getattr(user, "is_agent", "-"),
-                getattr(user, "is_admin", "-"),
-                getattr(user, "bot", "-")
-            ]
-
-    # Transform data
-    data = [item for item in data.values()]
+    for user in args.controller.list(filter=args.filter):
+        data.append([
+            user.url,
+            user.id,
+            user.username,
+            user.name,
+            getattr(user, "is_agent", "-"),
+            getattr(user, "is_admin", "-"),
+            getattr(user, "bot", "-")
+        ])
 
     common.print_table(headers, data, "Url")
 

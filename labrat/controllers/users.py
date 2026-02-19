@@ -8,28 +8,39 @@ class Users:
         self.config = Config(authed_only=True)
 
     def list(self, filter=None):
+        data = dict()
         for section, agent in self.config:
             users = agent.gitlab.users.list(all=True)
             for user in users:
-                label = f"{user.id}@{agent.host}"
-                user.label = label
-                user.is_agent = (self.config.has_section(label))
-                if filter is None or obj_filter(user, filter):
-                    yield agent, user
+                self._user_enrichment(agent, user)
+
+                if filter and not obj_filter(user, filter):
+                    continue
+
+                if user.label not in data.keys() or agent.is_admin:
+                    data[user.label] = user
+
+        return list(data.values())
 
     def create_pat(self, filter=None):
         for section, agent in self.config:
             if agent.is_admin:
                 for user in agent.gitlab.users.list(all=True):
-                    label = f"{user.id}@{agent.host}"
-                    if not self.config.has_section(label):
+                    self._user_enrichment(agent, user)
+                    if not self.config.has_section(user.label):
                         if filter and not obj_filter(user, filter):
                             continue
 
                         try:
                             token = agent.create_pat(user_id=user.id)
                             agent_user = Agent(agent.url, username=user.username, private_token=token)
-                            self.config[label] = agent_user.to_dict()
+                            self.config[user.label] = agent_user.to_dict()
                             yield agent_user, None
                         except Exception as e:
                             yield None, e
+
+    def _user_enrichment(self, agent, user):
+        user.url = agent.url
+        user.label = f"{user.id}@{agent.host}"
+        user.is_agent = self.config.has_section(user.label)
+        user.is_bot = getattr(user, "bot", None)
