@@ -57,7 +57,11 @@ def obj_filter(obj, filter_strings):
         else:
             # Simple filtering on all attribute values
             equals_op = True
-            obj._attrs.update(obj._updated_attrs) # Include extended GitLab attributes
+            if hasattr(obj, "_attrs"):
+                obj._attrs.update(obj._updated_attrs) # Include extended GitLab attributes
+            else:
+                # Add _attrs for non-GitLab objects
+                obj._attrs = {k: v for k, v in vars(obj).items() if not hasattr(v, '__dict__')}
             filter = ["_attrs", filter_string]
 
         value = getattr(obj, filter[0], None)
