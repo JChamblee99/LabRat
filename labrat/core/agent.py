@@ -19,7 +19,6 @@ class Agent:
         self.is_admin = False
         self.is_bot = False
         self.is_authenticated = False
-        self.label = f"{self.username}@{self.host}"
 
     def auth(self, private_token=None):
         if private_token is not None:
@@ -31,6 +30,8 @@ class Agent:
 
         user = self.gitlab.user
         self.id = user.id
+        self.label = f"{self.username}@{self.host}"
+        self.section = f"{self.id}@{self.host}"
         self.is_admin = getattr(self.gitlab.user, 'is_admin', False)
         self.is_bot = getattr(self.gitlab.user, 'bot', False)
 
