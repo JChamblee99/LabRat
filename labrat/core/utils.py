@@ -57,6 +57,7 @@ def obj_filter(obj, filter_strings):
         else:
             # Simple filtering on all attribute values
             equals_op = True
+            obj._attrs.update(obj._updated_attrs) # Include extended GitLab attributes
             filter = ["_attrs", filter_string]
 
         value = getattr(obj, filter[0], None)
