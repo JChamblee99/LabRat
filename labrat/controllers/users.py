@@ -14,13 +14,12 @@ class Users:
             for user in users:
                 self._user_enrichment(agent, user)
 
-                if filter and not obj_filter(user, filter):
-                    continue
-
                 if user.section not in data.keys() or agent.is_admin:
                     data[user.section] = user
 
-        return list(data.values())
+        data = [user for user in data.values() if not filter or obj_filter(user, filter)]
+
+        return data
 
     def create_pat(self, filter=None):
         for section, agent in self.config:
