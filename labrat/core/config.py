@@ -4,6 +4,7 @@ import threading
 from pathlib import Path
 
 from labrat.core.agent import Agent
+from labrat.core.utils import obj_filter
 
 class Config:
     def __init__(self, config_file="~/.python-gitlab.cfg", preauth=False, authed_only=False):
@@ -27,24 +28,11 @@ class Config:
         with open(self.config_file, "w") as file:
             self._config.write(file)
 
-    def __iter__(self, keyword=None):
+    def __iter__(self, filter=None):
         for section in self.sections():
             if section not in ["DEFAULT", "global"]:  # Skip special sections
                 
                 data = self[section]
-
-                # If keyword is provided, filter the agents for it
-                if keyword:
-                    fields = [
-                        section,
-                        data.get("url", ""),
-                        data.get("username", ""),
-                        data.get("private_token", "")
-                    ]
-
-                    if keyword.casefold() not in " ".join(fields).casefold():
-                        continue
-
                 agent = Agent.from_dict(data)  # Create an Agent instance from the section data
 
                 if self.preauth or self.authed_only:
@@ -53,11 +41,14 @@ class Config:
                     except Exception as e:
                         pass
 
+                if filter and not obj_filter(agent, filter):
+                    continue
+
                 if agent.is_authenticated or not self.authed_only:
                     yield section, agent
 
-    def filter(self, keyword):
-        return self.__iter__(keyword)
+    def filter(self, filter):
+        return self.__iter__(filter)
 
     def sections(self):
         return self._config.sections()
