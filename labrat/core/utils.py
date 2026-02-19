@@ -24,11 +24,15 @@ def parse_host_range(host_pattern):
     hostname_range_match = re.match(r"(.*)\{(\d+)\.\.(\d+)\}(.*)", host_pattern)
     if hostname_range_match:
         prefix = hostname_range_match.group(1)
-        start = int(hostname_range_match.group(2))
-        end = int(hostname_range_match.group(3))
+        start = hostname_range_match.group(2)
+        end = hostname_range_match.group(3)
         suffix = hostname_range_match.group(4)
-        for i in range(start, end + 1):
-            hosts.append(f"{prefix}{i:02}{suffix}")
+
+        # Padding for leading zeros
+        padding = max(len(start), len(end)) if start[0] == '0' or end[0] == '0' else 0
+        
+        for i in range(int(start), int(end) + 1):
+            hosts.append(f"{prefix}{i:0{padding}d}{suffix}")
         return hosts
 
     # If no range is detected, return the host as-is
