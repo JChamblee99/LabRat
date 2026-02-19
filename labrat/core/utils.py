@@ -77,5 +77,7 @@ def obj_filter(obj, filter_strings):
                 result = True
             else:
                 return False
+        elif equals_op:
+            return False
 
     return result
