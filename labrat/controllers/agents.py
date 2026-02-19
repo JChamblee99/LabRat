@@ -15,9 +15,7 @@ class Agents:
                 try:
                     agent.login()
                     agent.auth(private_token=agent.create_pat())
-
-                    section = f"{agent.id}@{domain}"
-                    self.config[section] = agent.to_dict()
+                    self.config[agent.section] = agent.to_dict()
                     yield agent, None
                 except Exception as e:
                     yield agent, e
