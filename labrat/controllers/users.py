@@ -17,8 +17,8 @@ class Users:
                 if filter and not obj_filter(user, filter):
                     continue
 
-                if user.label not in data.keys() or agent.is_admin:
-                    data[user.label] = user
+                if user.section not in data.keys() or agent.is_admin:
+                    data[user.section] = user
 
         return list(data.values())
 
@@ -27,20 +27,21 @@ class Users:
             if agent.is_admin:
                 for user in agent.gitlab.users.list(all=True):
                     self._user_enrichment(agent, user)
-                    if not self.config.has_section(user.label):
+                    if not self.config.has_section(user.section):
                         if filter and not obj_filter(user, filter):
                             continue
 
                         try:
                             token = agent.create_pat(user_id=user.id)
                             agent_user = Agent(agent.url, username=user.username, private_token=token)
-                            self.config[user.label] = agent_user.to_dict()
+                            self.config[user.section] = agent_user.to_dict()
                             yield agent_user, None
                         except Exception as e:
                             yield None, e
 
     def _user_enrichment(self, agent, user):
         user.url = agent.url
-        user.label = f"{user.id}@{agent.host}"
+        user.section = f"{user.id}@{agent.host}"
+        user.label = f"{user.username}@{agent.host}"
         user.is_agent = self.config.has_section(user.label)
         user.is_bot = getattr(user, "bot", None)
