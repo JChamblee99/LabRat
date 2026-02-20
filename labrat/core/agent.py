@@ -119,3 +119,6 @@ class Agent:
             use_ldap=(True if data.get("use_ldap") == "True" else False),
             api_version=data.get("api_version", 4)
         )
+    
+    def __repr__(self):
+        return self.to_dict().__repr__()
