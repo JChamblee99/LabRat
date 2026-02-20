@@ -31,6 +31,7 @@ class Agent:
 
         user = self.gitlab.user
         self.id = user.id
+        self.username = user.username
         self.label = f"{self.username}@{self.host}"
         self.section = self.section if self.section else f"{self.id}@{self.host}"
         self.is_admin = getattr(self.gitlab.user, 'is_admin', False)
