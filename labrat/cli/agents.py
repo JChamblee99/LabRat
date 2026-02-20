@@ -22,12 +22,12 @@ def build_parser(parsers):
 
 def handle_list_args(args):
     # Prepare table
-    headers = ["Url", "ID", "Username", "Authenticated", "Is Admin", "Is Bot", "Password", "Private Token"]
+    headers = ["Host", "ID", "Username", "Authenticated", "Is Admin", "Is Bot", "Password", "Private Token"]
     data = []
 
     for agent in args.controller.list(args.filter):
         data.append([
-            agent.url,
+            agent.host,
             agent.id,
             agent.username,
             agent.is_authenticated,
@@ -37,7 +37,7 @@ def handle_list_args(args):
             agent.private_token
         ])
 
-    common.print_table(headers, data, "Url")
+    common.print_table(headers, data, "Host")
 
 def handle_delete_args(args):
     # Delete configs for filtered sections

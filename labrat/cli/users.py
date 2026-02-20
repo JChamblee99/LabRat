@@ -22,12 +22,12 @@ def build_parser(parsers):
     return parser
 
 def handle_list_args(args):
-    headers = ["Url", "ID", "Username", "Name", "Is Agent", "Is Admin", "Is Bot"]
+    headers = ["Host", "ID", "Username", "Name", "Is Agent", "Is Admin", "Is Bot"]
     data = []
 
     for user in args.controller.list(filter=args.filter):
         data.append([
-            user.url,
+            user.host,
             user.id,
             user.username,
             user.name,
@@ -36,7 +36,7 @@ def handle_list_args(args):
             getattr(user, "bot", "-")
         ])
 
-    common.print_table(headers, data, "Url")
+    common.print_table(headers, data, "Host")
 
 def handle_create_pat_args(args):
     for agent, err in args.controller.create_pat(filter=args.filter):

@@ -40,6 +40,7 @@ class Users:
 
     def _user_enrichment(self, agent, user):
         user.url = agent.url
+        user.host = agent.host
         user.section = f"{user.id}@{agent.host}"
         user.label = f"{user.username}@{agent.host}"
         user.is_agent = self.config.has_section(user.label)
