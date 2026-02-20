@@ -37,7 +37,7 @@ def obj_filter(obj, filter_strings):
         else:
             # Simple filtering on all attribute values
             equals_op = True
-            if hasattr(obj, "_attrs"):
+            if hasattr(obj, "_updated_attrs"):
                 obj._attrs.update(obj._updated_attrs) # Include extended GitLab attributes
             else:
                 # Add _attrs for non-GitLab objects
