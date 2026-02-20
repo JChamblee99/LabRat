@@ -26,18 +26,6 @@ def parse_host_range(host_pattern):
     # If no range is detected, return the host as-is
     return [host_pattern]
 
-def ansi_for_level(level):
-    shades = [
-        "\x1b[0m",      # guest - none
-        "\x1b[0m",      # planner - none
-        "\x1b[0m",      # reporter - none
-        "\x1b[0;32m",   # developer - green
-        "\x1b[0;33m",   # maintainer - yellow
-        "\x1b[0;91m",   # owner - bright red (highest)
-    ]
-    idx = min(len(shades)-1, max(0, (level // 10)))
-    return shades[idx]
-
 def obj_filter(obj, filter_strings):
     result = False
     for filter_string in filter_strings:

@@ -32,3 +32,15 @@ def print_table(headers, data, sort_key=None):
     # Print data rows
     for row in data:
         print(" " + "  ".join(str(x).ljust(w) for x, w in zip(row, column_widths)) + " ")
+
+def ansi_for_level(level):
+    shades = [
+        "\x1b[0m",      # guest - none
+        "\x1b[0m",      # planner - none
+        "\x1b[0m",      # reporter - none
+        "\x1b[0;32m",   # developer - green
+        "\x1b[0;33m",   # maintainer - yellow
+        "\x1b[0;91m",   # owner - bright red (highest)
+    ]
+    idx = min(len(shades)-1, max(0, (level // 10)))
+    return shades[idx]
