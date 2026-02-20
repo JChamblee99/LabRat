@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 import gitlab
 
 class Agent:
-    def __init__(self, url, use_ldap=False, username=None, password=None, private_token=None, api_version=4):
+    def __init__(self, url, use_ldap=False, username=None, password=None, private_token=None, api_version=4, section=None):
         self.url = url
         self.host = urlparse(url).hostname
         self.use_ldap = use_ldap
@@ -12,6 +12,7 @@ class Agent:
         self.password = password
         self.private_token = private_token
         self.api_version = api_version
+        self.section = section
 
         self.session = requests.Session()
         self.gitlab = None
@@ -31,7 +32,7 @@ class Agent:
         user = self.gitlab.user
         self.id = user.id
         self.label = f"{self.username}@{self.host}"
-        self.section = f"{self.id}@{self.host}"
+        self.section = self.section if self.section else f"{self.id}@{self.host}"
         self.is_admin = getattr(self.gitlab.user, 'is_admin', False)
         self.is_bot = getattr(self.gitlab.user, 'bot', False)
 
@@ -117,7 +118,8 @@ class Agent:
             password=data.get("password"),
             private_token=data.get("private_token"),
             use_ldap=(True if data.get("use_ldap") == "True" else False),
-            api_version=data.get("api_version", 4)
+            api_version=data.get("api_version", 4),
+            section=data._name
         )
     
     def __repr__(self):
