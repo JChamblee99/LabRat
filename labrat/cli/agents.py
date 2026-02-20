@@ -22,7 +22,7 @@ def build_parser(parsers):
 
 def handle_list_args(args):
     # Prepare table
-    headers = ["Host", "ID", "Username", "Authenticated", "Is Admin", "Is Bot", "Password", "Private Token"]
+    headers = ["Host", "ID", "Username", "Name", "Authenticated", "Is Admin", "Is Bot", "Password", "Private Token"]
     data = []
 
     for agent in args.controller.list(args.filter):
@@ -30,6 +30,7 @@ def handle_list_args(args):
             agent.host,
             agent.id,
             agent.username,
+            agent.gitlab.user.name if agent.is_authenticated else "-",
             agent.is_authenticated,
             agent.is_admin,
             agent.is_bot,
