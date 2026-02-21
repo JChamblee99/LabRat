@@ -8,9 +8,9 @@ from urllib.parse import urlparse
 import gitlab
 
 from labrat.cli import common
-from labrat.core.utils import ansi_for_level
 from labrat.core.agent import Agent
 from labrat.core.config import Config
+from labrat.controllers.projects import Projects
 
 
 def build_parser(parsers):
@@ -19,16 +19,18 @@ def build_parser(parsers):
 
     list_parser = common.add_filtered_parser(subparsers, "list", handle_list_args, aliases=["ls"], help="List GitLab projects", filter_required=False)
     list_parser.add_argument("-m", "--min-access-level", required=False, type=int, help="Minimum access level to filter projects", default=0)
+    list_parser.add_argument("-u", "--user", action="append", required=False, help="Filter agent performing action")
 
     clone_parser = common.add_filtered_parser(subparsers, "clone", handle_clone_args, help="Clone GitLab repositories")
     clone_parser.add_argument("-o", "--output", required=False, help="Output location for cloned repositories", default='./')
+    clone_parser.add_argument("-u", "--user", action="append", required=False, help="Filter agent performing action")
 
     create_pat_parser = common.add_filtered_parser(subparsers, "create_pat", handle_create_pat_args, help="Create a personal access token", filter_required=True)
     create_pat_parser.add_argument("-l", "--access-level", required=False, type=int, help="Access level for the personal access token", default=50)
     create_pat_parser.add_argument("-d", "--days", required=False, type=int, help="Number of days until the token expires", default=60)
     create_pat_parser.add_argument("-n", "--token-name", required=False, help="Name for the personal access token", default="project_bot")
     create_pat_parser.add_argument("-s", "--scopes", required=False, help="Comma-separated list of scopes for the personal access token", default="api,read_repository,write_repository")
-    create_pat_parser.add_argument("-u", "--user", required=False, help="User to perform the creation")
+    create_pat_parser.add_argument("-u", "--user", action="append", required=False, help="Filter agent performing action")
 
     update_parser = common.add_filtered_parser(subparsers, "update", handle_update_args, help="Update GitLab repositories procedurally", filter_required=True)
     update_parser.add_argument("-F", "--file", required=True, help="Path to the remote file to update")
@@ -42,192 +44,60 @@ def build_parser(parsers):
 
     update_parser.add_argument("-m", "--commit-message", required=False, help="Commit message for the update", default="Update")
     update_parser.add_argument("-b", "--branch", required=False, help="Branch to update", default="main")
-    update_parser.add_argument("-u", "--user", required=False, help="User to perform the update")
+    update_parser.add_argument("-u", "--user", action="append", required=False, help="Filter agent performing action")
 
+    parser.set_defaults(controller=Projects())
     return subparsers
 
 def handle_list_args(args):
-    projects = get_projects(args)
-
-    # Format map for table
+    headers = ["Host", "ID", "Path with Namespace", "Access Level", "Agents"]
     data = []
-    for target, repos in projects.items():
-        for path_with_namespace, agents in repos.items():
-            access_levels = [get_project_access_level(agent, agent.gitlab.projects.get(path_with_namespace)) for agent in agents]
-            max_access_level = max(access_levels) if access_levels else 0
 
-            # color each username by that agent's access level (higher -> brighter)
-            usernames = []
-            for lvl, agent in zip(access_levels, agents):
-                color = ansi_for_level(lvl)
-                usernames.append(f"{color}{agent.username}\x1b[0m")
+    for project in args.controller.list(args.filter, args.user):
+        # color each username by that agent's access level (higher -> brighter)
+        usernames = []
+        for agent in project.agents:
+            color = common.ansi_for_level(agent.access_level)
+            usernames.append(f"{color}{agent.username} ({agent.access_level})\x1b[0m")
+        
+        # Add project information to data table
+        data.append([
+            project.host,
+            project.id,
+            project.path_with_namespace,
+            f"{project.access_level} ({gitlab.const.AccessLevel(project.access_level).name.lower()})",
+            ", ".join(usernames)
+        ])
 
-            data.append([
-                target,
-                path_with_namespace,
-                gitlab.const.AccessLevel(max_access_level).name.lower(),
-                ", ".join(usernames)
-            ])
-
-    common.print_table(["Target", "Project", "Access Level", "Usernames"], data)
+    common.print_table(headers, data)
 
 def handle_clone_args(args):
-    projects = get_projects(args, required_access_level=15)
-
-    for target, repos in projects.items():
-        for path_with_namespace, agents in repos.items():
-            agent = agents[0]
-            url = urlparse(agent.url)
-
-            clone_url = f"{url.scheme}://{agent.username}:{agent.private_token}@{url.netloc}/{path_with_namespace}.git"
-            to_path = f"{args.output}{'/' if args.output[-1] != '/' else ''}{url.hostname}/{path_with_namespace}"
-
-            if os.path.isdir(to_path):
-                print(f"[-] Directory {to_path} already exists, skipping...")
-                continue
-
-            try:
-                git.Repo.clone_from(clone_url, to_path)
-            except git.exc.GitCommandError as e:
-                print(f"[!] Failed to clone {path_with_namespace} from {target}: {e}")
-                continue
-
-            print(f"[+] Cloned {target}/{path_with_namespace} to {to_path}")
+    for project, err in args.controller.clone(args.output, args.user, args.filter):
+        if err:
+            print(f"[!] Failed to clone {project.web_url}: {err}")
+        else:
+            print(f"[+] Successfully cloned {project.clone_url} to {project.to_path}")
 
 def handle_create_pat_args(args):
-    config = Config()
-    sections = config.sections()
-    projects = get_projects(args, required_access_level=40)
-
-    for target, repos in projects.items():
-        for path_with_namespace, agents in repos.items():
-            if args.user:
-                agent = next((a for a in agents if a.username == args.user), None)
-                if not agent:
-                    print(f"[!] Failed to update: User {args.user} does not have sufficient access to {path_with_namespace}")
-                    continue
-            else:
-                agent = agents[0]
-            
-            try:
-                project = agent.gitlab.projects.get(path_with_namespace)
-                name = f"{args.token_name}_{project.id}"
-                sect = f"{name}@{urlparse(agent.url).hostname}"
-                if sect not in sections:
-                    req = project.access_tokens.create({
-                        "name": name,
-                        "access_level": args.access_level,
-                        "scopes": args.scopes.split(","),
-                        "expires_at": (datetime.datetime.now() + datetime.timedelta(days=args.days)).strftime("%Y-%m-%d")
-                    })
-                    token = req.token
-                    agent_project = Agent(agent.url, username=name, private_token=token)
-                    config[sect] = agent_project.to_dict()
-                    print(f"[+] Created access token for {path_with_namespace}: {token}")
-            except Exception as e:
-                print(f"[!] Failed to create access token for {path_with_namespace}: {e}")
+    expiration = (datetime.datetime.now() + datetime.timedelta(days=args.days)).strftime("%Y-%m-%d")
+    for project, agent, err in args.controller.create_access_token(args.token_name, args.access_level, args.scopes.split(","), expiration, args.user, args.filter):
+        if err:
+            print(f"[!] Failed to create access token for {project.web_url}: {err}")
+        else:
+            print(f"[+] Successfully created access token for {project.web_url}: {agent.private_token}")
 
 def handle_update_args(args):
-    projects = get_projects(args, required_access_level=30)
-
-    for target, repos in projects.items():
-        for path_with_namespace, agents in repos.items():
-            if args.user:
-                agent = next((a for a in agents if a.username == args.user), None)
-                if not agent:
-                    print(f"[!] Failed to update: User {args.user} does not have sufficient access to {path_with_namespace}")
-                    continue
-            else:
-                agent = agents[0]
-
-            try:
-                project = agent.gitlab.projects.get(path_with_namespace)
-                file = project.files.get(file_path=args.file, ref="main")
-                content = file.decode().decode("utf-8")
-
-                if args.content:
-                    new_content = args.content
-                elif args.content_file:
-                    with open(args.content_file, "r") as f:
-                        new_content = f.read()
-                elif args.pattern:
-                    if args.replace == None:
-                        print(f"[!] Failed to update: No replacement value provided with -r/--replace")
-                        return
-                    
-                    new_content = re.sub(args.pattern, args.replace, content, flags=re.MULTILINE)
-
-                if new_content == content:
-                    print(f"[-] No changes for {target}/{path_with_namespace}, skipping...")
-                    continue
-
-                commit = project.commits.create({
-                    "branch": args.branch,
-                    "commit_message": args.commit_message,
-                    "actions": [
-                        {
-                            "action": "update",
-                            "file_path": args.file,
-                            "content": new_content
-                        }
-                    ]
-                })
-
-                
-                print(f"[+] Updated {commit.web_url}")
-
-                diff = commit.diff()
-                if diff: print(diff[0].get("diff"))
-
-            except gitlab.exceptions.GitlabGetError as e:
-                continue
-            except Exception as e:
-                print(f"[!] Failed to update {target}/{path_with_namespace}: {e}")
-
-def get_projects(args, required_access_level=0):
-    # Dictionary to store map of targets to repositories to a list of users
-    repo_map = {}
-
-    # Iterate through the configuration
-    for section, agent in Config():
-        try:
-            agent.auth()
-        except Exception as e:
-            continue
-
-        # Fetch the list of projects for the agent
-        projects = agent.gitlab.projects.list(all=True)
-        for project in projects:
-            # Filter by sbstring of fields
-            if args.filter and args.filter.casefold() not in (f"{agent.url} {project.path_with_namespace} {agent.username}"):
-                continue
-
-            access_level = get_project_access_level(agent, project)
-            if "min_access_level" in args and access_level < args.min_access_level or access_level < required_access_level:
-                continue
-
-            domain = urlparse(agent.url).netloc
-            if domain not in repo_map:
-                repo_map[domain] = {}
-            if project.path_with_namespace not in repo_map[domain]:
-                repo_map[domain][project.path_with_namespace] = []
-            repo_map[domain][project.path_with_namespace].append(agent)
-            
-
-    # Sort targets
-    repo_map = dict(sorted(repo_map.items(), key=lambda x: re.sub(r"[^a-zA-Z0-9]", "", x[0])))
-
-    # Sort repositories
-    for target, repos in repo_map.items():
-        repo_map[target] = dict(sorted(repos.items(), key=lambda x: re.sub(r"[^a-zA-Z0-9]", "", x[0])))
-
-    return repo_map
-
-def get_project_access_level(agent, project):
-    if project.permissions['project_access']:
-        access_level = int(project.permissions['project_access']['access_level'])
-    elif project.permissions['group_access']:
-        access_level = int(project.permissions['group_access']['access_level'])
-    else:
-        access_level = 50 if agent.is_admin else 15
-    return access_level
+    content = None
+    if args.content:
+        content = args.content
+    elif args.content_file:
+        with open(args.content_file, "r") as f:
+            content = f.read()
+    
+    for project, commit, err in args.controller.update(file_path=args.file, content=content, pattern=args.pattern, replace=args.replace, branch=args.branch, commit_message=args.commit_message, agent_filter=args.user, filter=args.filter):
+        if err:
+            print(f"[!] Failed to update {project.web_url}: {err}")
+        else:
+            diff = commit.diff()
+            print(f"[+] Successfully updated {project.web_url}:")
+            if diff: print(diff[0].get("diff"))
