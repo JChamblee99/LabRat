@@ -57,8 +57,8 @@ def handle_list_args(args):
         # color each username by that agent's access level (higher -> brighter)
         usernames = []
         for agent in project.agents:
-            color = common.ansi_for_level(agent.access_level)
-            usernames.append(f"{color}{agent.username} ({agent.access_level})\x1b[0m")
+            colored_username = common.color_access_level(agent.access_level, f"{agent.username} ({agent.access_level})")
+            usernames.append(colored_username)
         
         # Add project information to data table
         data.append([
@@ -98,6 +98,7 @@ def handle_update_args(args):
         if err:
             print(f"[!] Failed to update {project.web_url}: {err}")
         else:
-            diff = commit.diff()
             print(f"[+] Successfully updated {project.web_url}:")
-            if diff: print(diff[0].get("diff"))
+            diff = commit.diff()
+            if diff:
+                print(common.color_diff(diff[0].get("diff")))

@@ -33,14 +33,45 @@ def print_table(headers, data, sort_key=None):
     for row in data:
         print(" " + "  ".join(str(x).ljust(w) for x, w in zip(row, column_widths)) + " ")
 
-def ansi_for_level(level):
+class Colors:
+    RESET = "\x1b[0m"
+    BRIGHT_RED = "\x1b[0;91m"
+    RED = "\x1b[0;31m"
+    GREEN = "\x1b[0;32m"
+    YELLOW = "\x1b[0;33m"
+    BLUE = "\x1b[0;34m"
+    MAGENTA = "\x1b[0;35m"
+    CYAN = "\x1b[0;36m"
+    WHITE = "\x1b[0;37m"
+
+def color_access_level(level, text):
     shades = [
-        "\x1b[0m",      # guest - none
-        "\x1b[0m",      # planner - none
-        "\x1b[0m",      # reporter - none
-        "\x1b[0;32m",   # developer - green
-        "\x1b[0;33m",   # maintainer - yellow
-        "\x1b[0;91m",   # owner - bright red (highest)
+        Colors.RESET,      # guest - none
+        Colors.RESET,      # planner - none
+        Colors.RESET,      # reporter - none
+        Colors.GREEN,      # developer - green
+        Colors.YELLOW,     # maintainer - yellow
+        Colors.BRIGHT_RED, # owner - bright red (highest)
     ]
     idx = min(len(shades)-1, max(0, (level // 10)))
-    return shades[idx]
+    return f"{shades[idx]}{text}{Colors.RESET}"
+
+def color_diff(diff):
+    lines = []
+    for line in diff.splitlines():
+        if line.startswith("@@"):
+            match = re.match(r"(@@[^@]*@@)(.*)", line)
+            if match:
+                header = match.group(1)
+                tail = match.group(2)
+                lines.append(f"{Colors.CYAN}{header}{Colors.RESET}{tail}")
+            else:
+                lines.append(line)
+        elif line.startswith("+"):
+            lines.append(f"{Colors.GREEN}{line}{Colors.RESET}")  # Green for additions
+        elif line.startswith("-"):
+            lines.append(f"{Colors.RED}{line}{Colors.RESET}")  # Red for deletions
+        else:
+            lines.append(line)
+
+    return "\n".join(lines)
