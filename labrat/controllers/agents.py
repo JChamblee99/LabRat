@@ -83,6 +83,9 @@ class Agents:
         """
 
         for section, agent in self.config.filter(filter):
+            if not agent.is_authenticated:
+                continue
+            
             try:
                 agent.add_ssh_key(title, key)
                 yield agent, None
