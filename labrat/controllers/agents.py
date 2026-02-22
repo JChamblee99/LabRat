@@ -17,8 +17,6 @@ class Agents:
 
         for username, password in users:
             for target in targets:
-                domain = urlparse(target).hostname
-                
                 agent = Agent(target, use_ldap, username, password)
                 try:
                     agent.login()
