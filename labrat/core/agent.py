@@ -119,7 +119,7 @@ class Agent:
             password=data.get("password"),
             private_token=data.get("private_token"),
             use_ldap=(True if data.get("use_ldap") == "True" else False),
-            api_version=data.get("api_version", 4),
+            api_version=int(data.get("api_version", 4)),
             section=data._name
         )
     
