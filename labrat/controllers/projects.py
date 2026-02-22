@@ -127,7 +127,7 @@ class Projects:
                 file = project.files.get(file_path=file_path, ref="main")
                 file_content = file.decode().decode("utf-8")
 
-                if content:
+                if content is not None:
                     new_content = content
                 elif pattern and replace is not None:
                     new_content = re.sub(pattern, replace, file_content, flags=re.MULTILINE)
