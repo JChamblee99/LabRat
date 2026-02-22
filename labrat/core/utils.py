@@ -31,8 +31,14 @@ def obj_filter(obj, filter_strings):
     """Filter an object based on a list of filters. Filters can include simple substrings or field selection and regex patterns.
 
     Filter criteria:
-    - Simple substring matching on all fields (e.g., `j.doe`)
+    - Searching on all fields (e.g., `j\\.doe`)
     - Field selection (e.g., `username=j.doe`)
+
+    Operators:
+    - `=`: Equal
+    - `!=`: Not equal
+    - `=~`: Regex match
+    - `!~`: Regex not match
 
     Keyword arguments:
     - obj: The object to filter.
@@ -41,22 +47,25 @@ def obj_filter(obj, filter_strings):
 
     result = False
     for filter_string in filter_strings:
-        # Determine whether to use simple or complex filtering
-        if "=" in filter_string:
-            # Complex filtering with operator
-            equals_op = "!=" not in filter_string
-            filter = filter_string.split("!=") if "!=" in filter_string else filter_string.split("=")
-        else:
-            # Simple filtering on all attribute values
-            equals_op = True
-            if hasattr(obj, "_updated_attrs"):
-                obj._attrs.update(obj._updated_attrs) # Include extended GitLab attributes
-            else:
-                # Add _attrs for non-GitLab objects
-                obj._attrs = {k: v for k, v in vars(obj).items() if not hasattr(v, '__dict__')}
-            filter = ["_attrs", filter_string]
+        equals_op = True
+        regex_op = True
 
-        value = getattr(obj, filter[0], None)
+        # Operator parsing
+        match = re.match(r"([a-zA-Z_]+)(!=|=~|!~|=)(.*)", filter_string)
+        if match:
+            field = match.group(1)
+            operator = match.group(2)
+            filter = match.group(3)
+
+            equals_op = not operator[0] == "!"
+            regex_op = operator[-1] == "~"
+
+            value = getattr(obj, field, None)
+        else:
+            filter = filter_string
+            value = get_attrs(obj)
+
+        # Ensure value is searchable
         if value is not None:
             # Exclude keys from search
             if isinstance(value, dict):
@@ -64,8 +73,14 @@ def obj_filter(obj, filter_strings):
             else:
                 value = str(value)
 
-            match = re.search(filter[1], value, flags=re.IGNORECASE) is not None
-            if match == equals_op:
+            # Regex or literal search
+            if regex_op:
+                search = re.search(filter, value, flags=re.IGNORECASE) is not None
+            else:
+                search = filter == value
+
+            # Negate search if using not-operator
+            if search == equals_op:
                 result = True
             else:
                 return False
@@ -73,3 +88,19 @@ def obj_filter(obj, filter_strings):
             return False
 
     return result
+
+def get_attrs(obj):
+    """Get attributes of an object as a dictionary.
+
+    Keyword arguments:
+    - obj: The object to get attributes from.
+    """
+    attrs = {}
+    if hasattr(obj, "_attrs"):
+        attrs.update(obj._attrs) # Include extended GitLab attributes
+    if hasattr(obj, "_updated_attrs"):
+        attrs.update(obj._updated_attrs) # Include updated attributes
+    if not attrs:
+        attrs = {k: v for k, v in vars(obj).items() if not hasattr(v, '__dict__')}
+
+    return attrs if attrs else None
