@@ -1,14 +1,5 @@
-import argparse
-from urllib.parse import urlparse
-
-import gitlab
-
 from labrat.cli import common
-from labrat.core.agent import Agent
-from labrat.core.config import Config
-
 from labrat.controllers.users import Users
-
 
 def build_parser(parsers):
     parser = parsers.add_parser("users", help="Manage GitLab users")

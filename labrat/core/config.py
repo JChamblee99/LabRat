@@ -1,6 +1,4 @@
 import configparser
-import os
-import threading
 from pathlib import Path
 
 from labrat.core.agent import Agent

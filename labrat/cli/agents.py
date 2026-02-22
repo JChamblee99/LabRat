@@ -1,7 +1,6 @@
 from labrat.cli import common
 from labrat.controllers.agents import Agents
 
-
 def build_parser(parsers):
     parser = parsers.add_parser("agents", help="Manage GitLab agents")
     subparsers = parser.add_subparsers(dest="command", required=True)

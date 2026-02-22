@@ -1,17 +1,8 @@
-import argparse
 import datetime
-import git
-import re
-import os
-from urllib.parse import urlparse
-
 import gitlab
 
 from labrat.cli import common
-from labrat.core.agent import Agent
-from labrat.core.config import Config
 from labrat.controllers.projects import Projects
-
 
 def build_parser(parsers):
     parser = parsers.add_parser("projects", help="Manage GitLab projects")

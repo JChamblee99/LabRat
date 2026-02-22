@@ -1,4 +1,3 @@
-import argparse
 import re
 
 def add_filtered_parser(subparsers, name, handler, aliases=[], help=None, filter_required=True, all_help="All items", filter_help="Filter by substring"):
