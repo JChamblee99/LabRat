@@ -92,11 +92,11 @@ class Projects:
                 elif pattern and replace is not None:
                     new_content = re.sub(pattern, replace, file_content)
                 else:
-                    yield project, "No update method specified"
+                    yield project, None, "No update method specified"
                     continue
 
                 if new_content == file_content:
-                    yield project, "Content is the same, skipping update"
+                    yield project, None, "Content is the same, skipping update"
                     continue
 
                 commit = project.commits.create({
