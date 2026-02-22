@@ -13,6 +13,14 @@ class Projects:
         self.config = Config(authed_only=True)
 
     def list(self, filter=None, agent_filter=None, min_level=0):
+        """List projects accessible by agents.
+
+        Keyword arguments:
+        - filter: Regex filter and field selection passed to `utils.obj_filter()` for project objects
+        - agent_filter: Regex filter and field selection passed to `utils.obj_filter()` for agent objects
+        - min_level: Minimum desired access level for agent to return a project
+        """
+
         repo_map = {}
         for section, agent in self.config.filter(agent_filter):
             projects = agent.gitlab.projects.list(all=True)
@@ -40,6 +48,14 @@ class Projects:
         return [proj for proj in repo_map.values() if not filter or obj_filter(proj, filter)]
 
     def clone(self, output, agent_filter=None, filter=None):
+        """Clone projects accessible by agents.
+
+        Keyword arguments:
+        - output: Output directory for cloned projects. A nested structure of `<hostname>/<namespace>/<project>` will be created inside.
+        - agent_filter: Regex filter and field selection passed to `utils.obj_filter()` for agent objects.
+        - filter: Regex filter and field selection passed to `utils.obj_filter()` for project objects.
+        """
+
         projects = self.list(filter=filter, agent_filter=agent_filter, min_level=15)
         for project in projects:
             agent = project.agents[0]
@@ -61,6 +77,17 @@ class Projects:
                 yield project, e
 
     def create_access_token(self, name, access_level, scopes, expires_at, agent_filter=None, filter=None):
+        """ Create Project Access Tokens.
+        
+        Keyword arguments:
+        - name: Name of the access token.
+        - access_level: Access level of the created PAT.
+        - scopes: List of scopes for the created PAT. (e.g. `['read_repository', 'write_repository']`)
+        - expires_at: ISO format expiration date for the created PAT.
+        - agent_filter: Regex filter and field selection passed to `utils.obj_filter()` for agent objects.
+        - filter: Regex filter and field selection passed to `utils.obj_filter()` for project objects.
+        """
+
         for project in self.list(filter=filter, agent_filter=agent_filter, min_level=40):
             agent = project.agents[0]
 
@@ -81,6 +108,19 @@ class Projects:
                 yield project, None, e
 
     def update(self, file_path, content=None, pattern=None, replace=None, branch=None, commit_message=None, agent_filter=None, filter=None):
+        """Update file contents.
+
+        Keyword arguments:
+        - file_path: Path to the file in project to update.
+        - content: New content for the file.
+        - pattern: Regex pattern to match for replacement.
+        - replace: Replacement string for the regex pattern.
+        - branch: Branch to commit the changes to.
+        - commit_message: Commit message for the update.
+        - agent_filter: Regex filter and field selection passed to `utils.obj_filter()` for agent objects.
+        - filter: Regex filter and field selection passed to `utils.obj_filter()` for project objects.
+        """
+
         for project in self.list(filter=filter, agent_filter=agent_filter, min_level=30):
             agent = project.agents[0]
             try:

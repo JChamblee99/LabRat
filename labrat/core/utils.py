@@ -1,11 +1,12 @@
 import re
 
 def parse_host_range(host_pattern):
+    """Parse a host pattern and generate a list of individual host addresses.
+
+    Keyword arguments:
+    - host_pattern: The host pattern to parse (e.g., "team{01..15}.ccdc.local")
     """
-    Parse a host pattern and generate a list of individual host addresses.
-    Supports:
-    - Parse brace expansion "team{01..15}.ccdc.local"
-    """
+    
     hosts = []
 
     # Match brace expansion patter (e.g., "team{01..15}.ccdc.local")
@@ -27,6 +28,17 @@ def parse_host_range(host_pattern):
     return [host_pattern]
 
 def obj_filter(obj, filter_strings):
+    """Filter an object based on a list of filters. Filters can include simple substrings or field selection and regex patterns.
+
+    Filter criteria:
+    - Simple substring matching on all fields (e.g., `j.doe`)
+    - Field selection (e.g., `username=j.doe`)
+
+    Keyword arguments:
+    - obj: The object to filter.
+    - filter_strings: A list of filter strings to apply.
+    """
+
     result = False
     for filter_string in filter_strings:
         # Determine whether to use simple or complex filtering

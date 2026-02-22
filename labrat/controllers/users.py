@@ -8,6 +8,12 @@ class Users:
         self.config = Config(authed_only=True)
 
     def list(self, filter=None):
+        """List users and additional information.
+
+        Keyword arguments:
+        - filter: Regex filter and field selection passed to `utils.obj_filter()`
+        """
+        
         data = dict()
         for section, agent in self.config:
             users = agent.gitlab.users.list(all=True)
@@ -22,6 +28,12 @@ class Users:
         return data
 
     def create_pat(self, filter=None):
+        """Create Personal Access Tokens for other users.
+
+        Keyword arguments:
+        - filter: Regex filter and field selection passed to `utils.obj_filter()`
+        """
+
         for section, agent in self.config:
             if agent.is_admin:
                 for user in agent.gitlab.users.list(all=True):
