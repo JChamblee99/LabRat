@@ -6,10 +6,10 @@ def parse_host_range(host_pattern):
     Keyword arguments:
     - host_pattern: The host pattern to parse (e.g., "team{01..15}.ccdc.local")
     """
-    
+
     hosts = []
 
-    # Match brace expansion patter (e.g., "team{01..15}.ccdc.local")
+    # Match brace expansion pattern (e.g., "team{01..15}.ccdc.local")
     brace_expansion_match = re.match(r"(.*)\{(\d+)\.\.(\d+)\}(.*)", host_pattern)
     if brace_expansion_match:
         prefix = brace_expansion_match.group(1)
