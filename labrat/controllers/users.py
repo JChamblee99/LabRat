@@ -13,7 +13,7 @@ class Users:
         Keyword arguments:
         - filter: Regex filter and field selection passed to `utils.obj_filter()`
         """
-        
+
         data = dict()
         for section, agent in self.config:
             users = agent.gitlab.users.list(all=True)
@@ -55,5 +55,5 @@ class Users:
         user.host = agent.host
         user.section = f"{user.id}@{agent.host}"
         user.label = f"{user.username}@{agent.host}"
-        user.is_agent = self.config.has_section(user.label)
+        user.is_agent = self.config.has_section(user.section)
         user.is_bot = getattr(user, "bot", None)
