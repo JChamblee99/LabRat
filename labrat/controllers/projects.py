@@ -130,7 +130,7 @@ class Projects:
                 if content:
                     new_content = content
                 elif pattern and replace is not None:
-                    new_content = re.sub(pattern, replace, file_content)
+                    new_content = re.sub(pattern, replace, file_content, flags=re.MULTILINE)
                 else:
                     yield project, None, "No update method specified"
                     continue
