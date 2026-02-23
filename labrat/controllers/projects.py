@@ -160,5 +160,5 @@ class Projects:
         elif project.permissions['group_access']:
             access_level = int(project.permissions['group_access']['access_level'])
         else:
-            access_level = 50 if agent.is_admin else 15
+            access_level = 60 if agent.is_admin else 15
         return access_level
