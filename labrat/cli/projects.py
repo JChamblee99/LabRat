@@ -67,7 +67,7 @@ def handle_clone_args(args):
         if err:
             print(f"[!] Failed to clone {project.web_url}: {err}")
         else:
-            print(f"[+] Successfully cloned {project.clone_url} to {project.to_path}")
+            print(f"[+] Successfully cloned {project.web_url} to {project.to_path}")
 
 def handle_create_pat_args(args):
     expiration = (datetime.datetime.now() + datetime.timedelta(days=args.days)).strftime("%Y-%m-%d")
