@@ -17,7 +17,11 @@ def build_parser(parsers):
     return parser
 
 def handle_args(args):
-    if args.re_auth or (args.target or args.target_file) and (args.username and args.password or args.combo_list):
+    has_targets = args.target or args.target_file
+    has_credentials = (args.username and args.password) or args.combo_list
+    can_auth = has_targets and has_credentials
+
+    if args.re_auth or can_auth:
         auth(args)
     else:
         getattr(args, "_parser", None).print_help()
