@@ -27,7 +27,7 @@ def parse_host_range(host_pattern):
     # If no range is detected, return the host as-is
     return [host_pattern]
 
-def obj_filter(obj, filter_strings):
+def obj_filter(obj, queries):
     """Filter an object based on a list of filters. Filters can include simple substrings or field selection and regex patterns.
 
     Filter criteria:
@@ -42,27 +42,27 @@ def obj_filter(obj, filter_strings):
 
     Keyword arguments:
     - obj: The object to filter.
-    - filter_strings: A list of filter strings to apply.
+    - queries: A list of filter strings to apply.
     """
 
     result = False
-    for filter_string in filter_strings:
+    for query in queries:
         equals_op = True
         regex_op = True
 
         # Operator parsing
-        match = re.match(r"([a-zA-Z_]+)(!=|=~|!~|=)(.*)", filter_string)
-        if match:
-            field = match.group(1)
-            operator = match.group(2)
-            filter = match.group(3)
+        parsed_query = re.match(r"([a-zA-Z_]+)(!=|=~|!~|=)(.*)", query)
+        if parsed_query:
+            field = parsed_query.group(1)
+            operator = parsed_query.group(2)
+            pattern = parsed_query.group(3)
 
             equals_op = not operator[0] == "!"
             regex_op = operator[-1] == "~"
 
             value = getattr(obj, field, None)
         else:
-            filter = filter_string
+            pattern = query
             value = get_attrs(obj)
 
         # Ensure value is searchable
@@ -75,9 +75,9 @@ def obj_filter(obj, filter_strings):
 
             # Regex or literal search
             if regex_op:
-                search = re.search(filter, value, flags=re.IGNORECASE) is not None
+                search = re.search(pattern, value, flags=re.IGNORECASE) is not None
             else:
-                search = filter.casefold() == value.casefold()
+                search = pattern.casefold() == value.casefold()
 
             # Negate search if using not-operator
             if search == equals_op:
