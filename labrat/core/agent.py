@@ -123,7 +123,7 @@ class Agent:
             private_token=data.get("private_token"),
             use_ldap=(True if data.get("use_ldap") == "True" else False),
             api_version=int(data.get("api_version", 4)),
-            section=data._name
+            section=data.get("_name", None)
         )
     
     def __repr__(self):
