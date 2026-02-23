@@ -8,6 +8,9 @@ def build_parser(parsers):
     list_parser = common.add_filtered_parser(subparsers, "list", handle_list_args, aliases=["ls"], help="List GitLab users", filter_required=False)
 
     create_pat_parser = common.add_filtered_parser(subparsers, "create_pat", handle_create_pat_args, help="Create a personal access token", filter_required=True)
+    create_pat_parser.add_argument("-n", "--token-name", required=False, help="Name for the personal access token", default="private token")
+    create_pat_parser.add_argument("-s", "--scopes", required=False, help="Comma-separated list of scopes for the personal access token", default="api,read_repository,write_repository")
+
 
     parser.set_defaults(controller=Users())
     return parser
@@ -30,7 +33,7 @@ def handle_list_args(args):
     common.print_table(headers, data, "Host")
 
 def handle_create_pat_args(args):
-    for agent, err in args.controller.create_pat(filter=args.filter):
+    for agent, err in args.controller.create_access_token(args.token_name, args.scopes.split(","), filter=args.filter):
         if err:
             print(f"[-] Failed to create PAT: {err}")
         else:

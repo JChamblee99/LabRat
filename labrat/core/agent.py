@@ -64,36 +64,26 @@ class Agent:
             }
             self.session.post(f"{self.url}/users/sign_in", data=payload)
 
-    def create_pat(self, user_id=None, token_name="private token", token_scopes=["api", "read_repository", "write_repository"]):
-        if user_id is None:
-            csrf_token = self.get_csrf_token()
-            payload = {
-                "personal_access_token[name]": token_name,
-                "personal_access_token[scopes][]": token_scopes,
-            }
-            headers = {"X-CSRF-Token": csrf_token}
-            r = self.session.post(
-                f"{self.url}/-/user_settings/personal_access_tokens",
-                data=payload,
-                headers=headers
-            )
+    def create_pat(self, token_name="private token", token_scopes=["api", "read_repository", "write_repository"]):
+        csrf_token = self.get_csrf_token()
+        payload = {
+            "personal_access_token[name]": token_name,
+            "personal_access_token[scopes][]": token_scopes,
+        }
+        headers = {"X-CSRF-Token": csrf_token}
+        r = self.session.post(
+            f"{self.url}/-/user_settings/personal_access_tokens",
+            data=payload,
+            headers=headers
+        )
 
-            try:
-                response_json = r.json()
-                if "new_token" in response_json:
-                    return response_json.get("new_token")
-                else:
-                    return response_json.get("token")
-            except ValueError:
-                return None
-        elif self.is_admin:
-            response = self.gitlab.users.get(user_id, lazy=True).personal_access_tokens.create({
-                "name": token_name,
-                "scopes": token_scopes,
-            })
-            return response.token
-        else:
-            print(f"[-] Cannot create PAT for user {user_id}. {self.username} is not an admin")
+        try:
+            response_json = r.json()
+            if "new_token" in response_json:
+                return response_json.get("new_token")
+            else:
+                return response_json.get("token")
+        except ValueError:
             return None
         
     def add_ssh_key(self, title, key):
