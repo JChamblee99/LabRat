@@ -4,7 +4,7 @@ from labrat.core.utils import parse_host_range
 def build_parser(parsers):
     parser = parsers.add_parser("auth", help="Authenticate to GitLab server(s)")
 
-    parser.add_argument("-t", "--target", required=False, nargs="+", action="append", help="GitLab server URL or pattern")
+    parser.add_argument("-t", "--target", required=False, nargs="+", action="extend", help="GitLab server URL or pattern")
     parser.add_argument("-T", "--target-file", required=False, help="Path to file containing GitLab server URLs or patterns")
     parser.add_argument("-u", "--username", required=False, help="Username or e-mail for authentication")
     parser.add_argument("-p", "--password", required=False, help="Password for authentication")
@@ -41,8 +41,7 @@ def auth(args):
     # Build the list of targets
     targets = []
     if args.target:
-        target_args = [target for sublist in args.target for target in sublist]
-        for target in target_args:
+        for target in args.target:
             targets.extend(parse_host_range(target))
     elif args.target_file:
         with open(args.target_file, "r") as f:
