@@ -1,47 +1,106 @@
 import re
 
 def parse_host_range(host_pattern):
+    """Parse a host pattern and generate a list of individual host addresses.
+
+    Keyword arguments:
+    - host_pattern: The host pattern to parse (e.g., "team{01..15}.ccdc.local")
     """
-    Parse a host pattern and generate a list of individual host addresses.
-    Supports:
-    - IP ranges like "10.10.101-115.80"
-    - Hostname ranges like "team{01...15}.farm.local"
-    """
+
     hosts = []
 
-    # Match IP range pattern (e.g., "10.10.101-115.80")
-    ip_range_match = re.match(r"([0-9.]*)\.(\d+)-(\d+)([0-9.:]*)", host_pattern)
-    if ip_range_match:
-        prefix = ip_range_match.group(1)
-        start = int(ip_range_match.group(2))
-        end = int(ip_range_match.group(3))
-        suffix = ip_range_match.group(4)
-        for i in range(start, end + 1):
-            hosts.append(f"{prefix}.{i}{suffix}")
-        return hosts
+    # Match brace expansion pattern (e.g., "team{01..15}.ccdc.local")
+    brace_expansion_match = re.match(r"(.*)\{(\d+)\.\.(\d+)\}(.*)", host_pattern)
+    if brace_expansion_match:
+        prefix = brace_expansion_match.group(1)
+        start = brace_expansion_match.group(2)
+        end = brace_expansion_match.group(3)
+        suffix = brace_expansion_match.group(4)
 
-    # Match hostname range pattern (e.g., "team{01..15}.farm.local")
-    hostname_range_match = re.match(r"(.*)\{(\d+)\.\.(\d+)\}(.*)", host_pattern)
-    if hostname_range_match:
-        prefix = hostname_range_match.group(1)
-        start = int(hostname_range_match.group(2))
-        end = int(hostname_range_match.group(3))
-        suffix = hostname_range_match.group(4)
-        for i in range(start, end + 1):
-            hosts.append(f"{prefix}{i:02}{suffix}")
+        # Padding for leading zeros
+        padding = max(len(start), len(end)) if start[0] == '0' or end[0] == '0' else 0
+
+        for i in range(int(start), int(end) + 1):
+            hosts.append(f"{prefix}{i:0{padding}d}{suffix}")
         return hosts
 
     # If no range is detected, return the host as-is
     return [host_pattern]
 
-def ansi_for_level(level):
-    shades = [
-        "\x1b[0m",      # guest - none
-        "\x1b[0m",      # planner - none
-        "\x1b[0m",      # reporter - none
-        "\x1b[0;32m",   # developer - green
-        "\x1b[0;33m",   # maintainer - yellow
-        "\x1b[0;91m",   # owner - bright red (highest)
-    ]
-    idx = min(len(shades)-1, max(0, (level // 10)))
-    return shades[idx]
+def obj_filter(obj, queries):
+    """Filter an object based on a list of filters. Filters can include simple substrings or field selection and regex patterns.
+
+    Filter criteria:
+    - Searching on all fields (e.g., `j\\.doe`)
+    - Field selection (e.g., `username=j.doe`)
+
+    Operators:
+    - `=`: Equal
+    - `!=`: Not equal
+    - `=~`: Regex match
+    - `!~`: Regex not match
+
+    Keyword arguments:
+    - obj: The object to filter.
+    - queries: A list of filter strings to apply.
+    """
+
+    result = False
+    for query in queries:
+        equals_op = True
+        regex_op = True
+
+        # Operator parsing
+        parsed_query = re.match(r"([a-zA-Z_]+)(!=|=~|!~|=)(.*)", query)
+        if parsed_query:
+            field = parsed_query.group(1)
+            operator = parsed_query.group(2)
+            pattern = parsed_query.group(3)
+
+            equals_op = not operator[0] == "!"
+            regex_op = operator[-1] == "~"
+
+            value = getattr(obj, field, None)
+        else:
+            pattern = query
+            value = get_attrs(obj)
+
+        # Ensure value is searchable
+        if value is not None:
+            # Exclude keys from search
+            if isinstance(value, dict):
+                value = str(value.values())
+            else:
+                value = str(value)
+
+            # Regex or literal search
+            if regex_op:
+                search = re.search(pattern, value, flags=re.IGNORECASE) is not None
+            else:
+                search = pattern.casefold() == value.casefold()
+
+            # Negate search if using not-operator
+            if search == equals_op:
+                result = True
+            else:
+                return False
+        elif equals_op:
+            return False
+
+    return result
+
+def get_attrs(obj):
+    """Get attributes of an object as a dictionary.
+
+    Keyword arguments:
+    - obj: The object to get attributes from.
+    """
+    attrs = {}
+    if hasattr(obj, "_attrs"):
+        attrs.update(obj._attrs) # Include extended GitLab attributes
+    if hasattr(obj, "_updated_attrs"):
+        attrs.update(obj._updated_attrs) # Include updated attributes
+    if not attrs:
+        attrs = {k: v for k, v in vars(obj).items() if not hasattr(v, '__dict__')}
+
+    return attrs if attrs else None
