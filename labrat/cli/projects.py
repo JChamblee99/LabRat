@@ -16,11 +16,11 @@ def build_parser(parsers):
     clone_parser.add_argument("-o", "--output", required=False, help="Output location for cloned repositories", default='./')
     clone_parser.add_argument("-u", "--user", action="append", required=False, help="Filter agent performing action")
 
-    create_pat_parser = common.add_filtered_parser(subparsers, "create_pat", handle_create_pat_args, help="Create a personal access token", filter_required=True)
-    create_pat_parser.add_argument("-l", "--access-level", required=False, type=int, help="Access level for the personal access token", default=50)
+    create_pat_parser = common.add_filtered_parser(subparsers, "create_pat", handle_create_pat_args, help="Create an access token", filter_required=True)
+    create_pat_parser.add_argument("-l", "--access-level", required=False, type=int, help="Access level for the access token", default=50)
     create_pat_parser.add_argument("-d", "--days", required=False, type=int, help="Number of days until the token expires", default=60)
-    create_pat_parser.add_argument("-n", "--token-name", required=False, help="Name for the personal access token", default="project_bot")
-    create_pat_parser.add_argument("-s", "--scopes", required=False, help="Comma-separated list of scopes for the personal access token", default="api,read_repository,write_repository")
+    create_pat_parser.add_argument("-n", "--token-name", required=False, help="Name for the access token", default="project_bot")
+    create_pat_parser.add_argument("-s", "--scopes", required=False, help="Comma-separated list of scopes for the access token", default="api,read_repository,write_repository")
     create_pat_parser.add_argument("-u", "--user", action="append", required=False, help="Filter agent performing action")
 
     update_parser = common.add_filtered_parser(subparsers, "update", handle_update_args, help="Update GitLab repositories procedurally", filter_required=True)
