@@ -77,7 +77,7 @@ def obj_filter(obj, filter_strings):
             if regex_op:
                 search = re.search(filter, value, flags=re.IGNORECASE) is not None
             else:
-                search = filter == value
+                search = filter.casefold() == value.casefold()
 
             # Negate search if using not-operator
             if search == equals_op:
