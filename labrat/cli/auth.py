@@ -1,4 +1,4 @@
-from labrat.controllers.agents import Agents
+from labrat.controllers.auth import Auth
 from labrat.core.utils import parse_host_range
 
 def build_parser(parsers):
@@ -13,7 +13,7 @@ def build_parser(parsers):
     parser.add_argument("-r", "--re-auth", action="store_true", help="Re-authenticate with stored credentials")
 
     parser.set_defaults(func=handle_args, _parser=parser)
-    parser.set_defaults(controller=Agents())
+    parser.set_defaults(controller=Auth())
     return parser
 
 def handle_args(args):
