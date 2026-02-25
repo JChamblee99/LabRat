@@ -11,6 +11,8 @@ def build_parser(parsers):
     parser.add_argument("-C", "--combo-list", required=False, help="Path to the combo list file")
     parser.add_argument("-l", "--use-ldap", action="store_true", help="Use LDAP for authentication")
     parser.add_argument("-r", "--re-auth", action="store_true", help="Re-authenticate with stored credentials")
+    parser.add_argument("-n", "--token-name", required=False, help="Name for the access token", default="private token")
+    parser.add_argument("-s", "--scopes", required=False, help="Comma-separated list of scopes for the access token", default="api,read_repository,write_repository")
 
     parser.set_defaults(func=handle_args, _parser=parser)
     parser.set_defaults(controller=Auth())
@@ -48,8 +50,10 @@ def auth(args):
             for line in f:
                 targets.extend(parse_host_range(line.strip()))
 
+    scopes = args.scopes.split(",") if args.scopes else []
+
     # Iterate over each user and target
-    for agent, err in args.controller.reauth(targets=targets, users=[user[0] for user in users]) if args.re_auth else args.controller.auth(targets, users, use_ldap=args.use_ldap):
+    for agent, err in args.controller.reauth(token_name=args.token_name, token_scopes=scopes, targets=targets, users=[user[0] for user in users]) if args.re_auth else args.controller.auth(targets, users, token_name=args.token_name, token_scopes=scopes, use_ldap=args.use_ldap):
         if err:
             print(f"[-] Authentication failed for {agent.label}: {err}")
         else:
