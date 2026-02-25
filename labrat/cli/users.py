@@ -7,9 +7,9 @@ def build_parser(parsers):
 
     list_parser = common.add_filtered_parser(subparsers, "list", handle_list_args, aliases=["ls"], help="List GitLab users", filter_required=False)
 
-    create_pat_parser = common.add_filtered_parser(subparsers, "create_pat", handle_create_pat_args, help="Create an access token", filter_required=True)
-    create_pat_parser.add_argument("-n", "--token-name", required=False, help="Name for the access token", default="private token")
-    create_pat_parser.add_argument("-s", "--scopes", required=False, help="Comma-separated list of scopes for the access token", default="api,read_repository,write_repository")
+    create_token_parser = common.add_filtered_parser(subparsers, "create_token", handle_create_token_args, help="Create an access token", filter_required=True)
+    create_token_parser.add_argument("-n", "--token-name", required=False, help="Name for the access token", default="private token")
+    create_token_parser.add_argument("-s", "--scopes", required=False, help="Comma-separated list of scopes for the access token", default="api,read_repository,write_repository")
 
 
     parser.set_defaults(controller=Users())
@@ -32,9 +32,9 @@ def handle_list_args(args):
 
     common.print_table(headers, data, "Host")
 
-def handle_create_pat_args(args):
-    for agent, err in args.controller.create_access_token(args.token_name, args.scopes.split(","), filter=args.filter):
+def handle_create_token_args(args):
+    for agent, err in args.controller.create_token(args.token_name, args.scopes.split(","), filter=args.filter):
         if err:
-            print(f"[-] Failed to create PAT: {err}")
+            print(f"[-] Failed to create access token: {err}")
         else:
-            print(f"[+] Created PAT for {agent.label}: {agent.private_token}")
+            print(f"[+] Created access token for {agent.label}: {agent.private_token}")

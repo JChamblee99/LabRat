@@ -27,7 +27,7 @@ class Users:
 
         return data
 
-    def create_access_token(self, name, scopes, filter=None):
+    def create_token(self, name, scopes, filter=None):
         """Create Personal Access Tokens for other users.
 
         Keyword arguments:

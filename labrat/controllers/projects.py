@@ -76,7 +76,7 @@ class Projects:
             except Exception as e:
                 yield project, e
 
-    def create_access_token(self, name, access_level, scopes, expires_at, agent_filter=None, filter=None):
+    def create_token(self, name, access_level, scopes, expires_at, agent_filter=None, filter=None):
         """ Create Project Access Tokens.
         
         Keyword arguments:

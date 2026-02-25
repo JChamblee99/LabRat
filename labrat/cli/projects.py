@@ -16,12 +16,12 @@ def build_parser(parsers):
     clone_parser.add_argument("-o", "--output", required=False, help="Output location for cloned repositories", default='./')
     clone_parser.add_argument("-u", "--user", action="append", required=False, help="Filter agent performing action")
 
-    create_pat_parser = common.add_filtered_parser(subparsers, "create_pat", handle_create_pat_args, help="Create an access token", filter_required=True)
-    create_pat_parser.add_argument("-l", "--access-level", required=False, type=int, help="Access level for the access token", default=50)
-    create_pat_parser.add_argument("-d", "--days", required=False, type=int, help="Number of days until the token expires", default=60)
-    create_pat_parser.add_argument("-n", "--token-name", required=False, help="Name for the access token", default="project_bot")
-    create_pat_parser.add_argument("-s", "--scopes", required=False, help="Comma-separated list of scopes for the access token", default="api,read_repository,write_repository")
-    create_pat_parser.add_argument("-u", "--user", action="append", required=False, help="Filter agent performing action")
+    create_token_parser = common.add_filtered_parser(subparsers, "create_token", handle_create_token_args, help="Create an access token", filter_required=True)
+    create_token_parser.add_argument("-l", "--access-level", required=False, type=int, help="Access level for the access token", default=50)
+    create_token_parser.add_argument("-d", "--days", required=False, type=int, help="Number of days until the token expires", default=60)
+    create_token_parser.add_argument("-n", "--token-name", required=False, help="Name for the access token", default="project_bot")
+    create_token_parser.add_argument("-s", "--scopes", required=False, help="Comma-separated list of scopes for the access token", default="api,read_repository,write_repository")
+    create_token_parser.add_argument("-u", "--user", action="append", required=False, help="Filter agent performing action")
 
     update_parser = common.add_filtered_parser(subparsers, "update", handle_update_args, help="Update GitLab repositories procedurally", filter_required=True)
     update_parser.add_argument("-F", "--file", required=True, help="Path to the remote file to update")
@@ -69,9 +69,9 @@ def handle_clone_args(args):
         else:
             print(f"[+] Successfully cloned {project.web_url} to {project.to_path}")
 
-def handle_create_pat_args(args):
+def handle_create_token_args(args):
     expiration = (datetime.datetime.now() + datetime.timedelta(days=args.days)).strftime("%Y-%m-%d")
-    for project, agent, err in args.controller.create_access_token(args.token_name, args.access_level, args.scopes.split(","), expiration, args.user, args.filter):
+    for project, agent, err in args.controller.create_token(args.token_name, args.access_level, args.scopes.split(","), expiration, args.user, args.filter):
         if err:
             print(f"[!] Failed to create access token for {project.web_url}: {err}")
         else:
