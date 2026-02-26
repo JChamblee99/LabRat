@@ -41,7 +41,7 @@ class Agents:
                 continue
             
             try:
-                agent.add_ssh_key(title, key)
+                agent.gitlab.user.keys.create({'title': title, 'key': key})
                 yield agent, None
             except Exception as e:
                 yield agent, e
