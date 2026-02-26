@@ -6,7 +6,7 @@ class Auth:
     def __init__(self):
         self.config = Config()
 
-    def auth(self, targets, users, token_name, token_scopes, use_ldap=False):
+    def auth(self, targets, users, token_name, token_scopes, private_token, use_ldap=False):
         """Authenticate and create a PAT for each user on each target.
         
         Keyword arguments:
@@ -19,10 +19,14 @@ class Auth:
 
         for username, password in users:
             for target in targets:
-                agent = Agent(target, use_ldap, username, password)
                 try:
-                    agent.login()
-                    agent.auth(private_token=agent.create_pat(token_name, token_scopes))
+                    if private_token:
+                        agent = Agent(url=target, username=username, private_token=private_token)
+                    else:
+                        agent = Agent(url=target, username=username, password=password, use_ldap=use_ldap)
+                        agent.login()
+                        agent.auth(private_token=agent.create_pat(token_name, token_scopes))
+
                     self.config[agent.section] = agent.to_dict()
                     yield agent, None
                 except Exception as e:
