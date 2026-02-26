@@ -1,47 +1,66 @@
+<div align="center">
+
 # LabRat
 
-LabRat is a GitLab exploitation orchestrator designed for security researchers and penetration testers.
+**GitLab exploitation orchestrator.**
+
+[![PyPI - Version](https://img.shields.io/pypi/v/gitlabrat)](https://pypi.org/project/gitlabrat/)
+[![PyPI - Downloads](https://img.shields.io/pypi/dm/gitlabrat)](https://pypi.org/project/gitlabrat/)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+[![GitHub last commit](https://img.shields.io/github/last-commit/JChamblee99/LabRat)](https://github.com/JChamblee99/LabRat/commits/main)
+
+</div>
+
+---
+
+## Overview
+
+LabRat automates common GitLab exploitation workflows: credential spraying, token creation, project enumeration, repository cloning, and bulk updates.
 
 ## Features
 
-- **Authentication Management** - Authenticate to GitLab servers and manage access tokens
-- **Project Management** - List, clone, and manipulate GitLab projects
-- **User Management** - Enumerate and create access tokens for GitLab users
-- **Agent Management** - Manage multiple GitLab agents and credentials
+- **Authentication** — Spray credentials or combo lists across GitLab instances with optional LDAP support
+- **Agent management** — Track access tokens and push SSH keys across available agents
+- **Project operations** — Enumerate, clone, create access tokens, and perform procedural updates on repositories
+- **User enumeration** — List users with advanced filtering and create access tokens
 
 ## Installation
-
-Install LabRat from PyPI:
 
 ```bash
 pip install gitlabrat
 ```
 
-## Usage
+> Requires **Python 3.8+**
+
+## Quick Start
 
 ```bash
-labrat --help
+# Authenticate to a GitLab instance
+labrat auth -t https://gitlab.example.com -u username -p password
+
+# List authenticated agents
+labrat agents ls
 ```
 
-### Commands
+## Usage
 
-- `labrat auth` - Authenticate to GitLab server(s)
-- `labrat agents` - Manage GitLab agents
-- `labrat projects` - Manage GitLab projects
-- `labrat users` - Manage GitLab users
+```
+labrat [-h] {agents,auth,projects,users} ...
+```
 
-## Requirements
+## Dependencies
 
-- Python 3.8+
-- python-gitlab
-- GitPython
-- beautifulsoup4
-- requests
+| Package | Purpose |
+|---------|---------|
+| [python-gitlab](https://python-gitlab.readthedocs.io/) | GitLab API client |
+| [GitPython](https://gitpython.readthedocs.io/) | Git repository operations |
+| [BeautifulSoup4](https://www.crummy.com/software/BeautifulSoup/) | HTML parsing for session auth |
+| [Requests](https://docs.python-requests.org/) | HTTP session management |
+
+## Disclaimer
+
+This tool is intended for **authorized security testing and research only**. The author assumes no liability for misuse. Always obtain proper authorization before testing against any system you do not own.
 
 ## License
 
-GNU General Public License v3.0 (GPL-3.0)
-
-## Author
-
-John Chamblee
+[GNU General Public License v3.0](LICENSE)
