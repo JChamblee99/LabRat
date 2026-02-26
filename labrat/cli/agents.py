@@ -9,7 +9,7 @@ def build_parser(parsers):
     
     delete_parser = common.add_filtered_parser(subparsers, "delete", handle_delete_args, aliases=["rm"], help="Delete GitLab server from config")
 
-    add_key_parser = common.add_filtered_parser(subparsers, "add-key", handle_add_key_args, help="Add SSH key to the user account", filter_required=False)
+    add_key_parser = common.add_filtered_parser(subparsers, "add_key", handle_add_key_args, help="Add SSH key to the user account", filter_required=False)
     key_group = add_key_parser.add_mutually_exclusive_group(required=True)
     key_group.add_argument("-k", "--key", required=False, help="Public SSH key to add")
     key_group.add_argument("-K", "--key-file", required=False, help="Path to public SSH key file")
