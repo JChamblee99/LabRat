@@ -21,7 +21,7 @@ def build_parser(parsers):
 
 def handle_list_args(args):
     # Prepare table
-    headers = ["Host", "ID", "Username", "Name", "Authenticated", "Is Admin", "Is Bot", "Password", "Private Token"]
+    headers = ["Host", "ID", "Username", "Name", "Is Authenticated", "Is Admin", "Is Bot", "Password", "Private Token"]
     data = []
 
     for agent in args.controller.list(args.filter):
